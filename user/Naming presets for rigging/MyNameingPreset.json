@@ -1,0 +1,22 @@
+{
+  "addon": "bonecraft",
+  "addon_version": "0.3.5",
+  "preset_name": "MyRiggingPreset",
+  "Last_saved_date": "2023-03-15T12:00:00",
+  "Rigging_naming_conventions": {
+    "prefixes": ["CTRL", "DEF", "MCH"],
+    "middle_words": ["Arm", "Leg", "Spine"],
+    "suffixes": ["Tweak", "Pole"],
+    "counter_settings": {
+      "digits": 2
+    },
+    "side_pair_settings": {
+      "side_pair": "LR",
+      "separator": "_",
+      "position": "SUFFIX"
+    },
+    "separator_settings": {
+      "separator": "_"
+    }
+  }
+}
