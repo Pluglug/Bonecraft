@@ -1,5 +1,5 @@
 from vlog import log
-from debug import *
+from debug_flags import *
 
 import functools
 

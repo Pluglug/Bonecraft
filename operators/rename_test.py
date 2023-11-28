@@ -2,7 +2,7 @@ import re
 import bpy
 
 from utils.vlog import log
-from utils.debug import DBG_RENAME
+from utils.debug_flags import DBG_RENAME
 
 
 test_bone_names = [
