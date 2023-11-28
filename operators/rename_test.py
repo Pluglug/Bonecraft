@@ -3,41 +3,7 @@ import bpy
 
 from utils.vlog import log
 from utils.debug_flags import DBG_RENAME
-
-
-test_bone_names = [
-    "Arm.L", "Leg.R", "Spine_01", "Hand.l", "Foot.r", "Head", "Finger01.L", "Toe01.R"
-]
-
-test_selected_pose_bones = [
-     bpy.data.objects['SubArmature'].pose.bones["Bone"],
-     bpy.data.objects['MyArmature'].pose.bones["Root"],
-     bpy.data.objects['MyArmature'].pose.bones["Hand.l"],
-     bpy.data.objects['MyArmature'].pose.bones["Spine_01"],
-     bpy.data.objects['MyArmature'].pose.bones["Leg.R"],
-     bpy.data.objects['MyArmature'].pose.bones["Arm.L"],
-     bpy.data.objects['MyArmature'].pose.bones["Tail"],
-     bpy.data.objects['MyArmature'].pose.bones["Hand.l.001"],
-     bpy.data.objects['MyArmature'].pose.bones["Hand.l.002"],
-     bpy.data.objects['MyArmature'].pose.bones["Finger01.L"],
-     bpy.data.objects['MyArmature'].pose.bones["Finger02.L"]
-]
-
-rename_preset = {
-    "prefixes": ["CTRL", "DEF", "MCH"],
-    "middle_words": ["Arm", "Leg", "Spine", "Hand", "Foot", "Head", "Finger", "Toe"],
-    "suffixes": ["Tweak", "Pole"],
-    "counter_settings": {"digits": 2},
-    "side_pair_settings": {
-        "side_pair": "LR",
-        "separator": "_",
-        "position": "SUFFIX"
-    },
-    "separator_settings": {"separator": "_"}
-}
-
-
-import re
+from test_data import *
 
 
 class RenameCache:
@@ -89,7 +55,7 @@ class RenameCache:
             return 'left', 'right'
         # その他の条件に対応する必要があればここに追加
         else:
-            return '', ''  # デフォルトの値
+            return 'L', 'R'  # デフォルトの値
 
     def print_cache(self):
         DBG_RENAME and log.header("Current Regex Cache")
@@ -117,11 +83,11 @@ class BoneInfo:
     # 必要に応じて他のメソッドやプロパティを追加
 
 
-selected_bones_info = [BoneInfo(pose_bone) for pose_bone in bpy.context.selected_pose_bones]
-
-# リネーム例
-for bone_info in selected_bones_info:
-    bone_info.rename("新しい名前")
+# selected_bones_info = [BoneInfo(pose_bone) for pose_bone in bpy.context.selected_pose_bones]
+#
+# # リネーム例
+# for bone_info in selected_bones_info:
+#     bone_info.rename("新しい名前")
 
 
 # if __name__ == "__main__":

@@ -3,10 +3,17 @@ import os
 from datetime import datetime
 from addon import ADDON_ID, VERSION
 
+from utils.vlog import log
+from utils.debug_flags import DBG_PRESET
+
+
+# def on_property_update(self, context):
+#     preset_manager.unsaved_changes = True
+
 
 class PresetManager:
     def __init__(self):
-        self.hoge = ""
+        self.unsaved_changes = False
 
     @staticmethod
     def create_preset_data(rigging_naming_conventions, preset_name):
@@ -23,23 +30,27 @@ class PresetManager:
         required_keys = {'addon', 'addon_version', 'preset_name', 'Last_saved_date', 'Rigging_naming_conventions'}
         return required_keys.issubset(data.keys())
 
-    @classmethod
-    def load_preset(cls, file_path):
+    def load_preset(self, file_path):
         # 現在編集中のファイルとして設定する。
         with open(file_path, 'r') as file:
             data = json.load(file)
 
-        if cls.is_valid_format(data):
+        if self.is_valid_format(data):
+            self.unsaved_changes = False
             return data['Rigging_naming_conventions']
         else:
             raise ValueError("Invalid preset format")
 
-    @classmethod
-    def save_preset(cls, file_path, rigging_naming_conventions, preset_name):
-        preset_data = cls.create_preset_data(rigging_naming_conventions, preset_name)
+    def save_preset(self, file_path, rigging_naming_conventions, preset_name):
+        # bone_namingsからプロパティーを取得
+        preset_data = self.create_preset_data(rigging_naming_conventions, preset_name)
 
         with open(file_path, 'w') as file:
             json.dump(preset_data, file, indent=4)
+
+        # 未保存フラグを消す
+        self.unsaved_changes = False
+        # RenameCacheを作る
 
     # # プリセットデータの取得メソッド
     # def get_prefixes(self):
