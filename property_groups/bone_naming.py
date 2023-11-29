@@ -60,5 +60,42 @@ class BoneSeparatorSettings(bpy.types.PropertyGroup):
     )
 
 
+class BoneNamingPreset(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty(name="Preset Name")
+    prefixes: bpy.props.CollectionProperty(type=BoneNamingPrefix)
+    middle_words: bpy.props.CollectionProperty(type=BoneNamingMiddleWord)
+    suffixes: bpy.props.CollectionProperty(type=BoneNamingSuffix)
+    counter_settings: bpy.props.PointerProperty(type=BoneCounterSettings)
+    side_pair_settings: bpy.props.PointerProperty(type=BoneSidePairSettings)
+    separator_settings: bpy.props.PointerProperty(type=BoneSeparatorSettings)
+
+    def generate_regex_cache(self):
+        pass
+
+    def validate_data(self):
+        pass
+
+
+class BoneNamingPresets(bpy.types.PropertyGroup):
+    is_cache_valid = False
+
+    presets: bpy.props.CollectionProperty(type=BoneNamingPreset)
+    active_preset_index: bpy.props.IntProperty(name="Active Preset Index")
+
+    def on_preset_selected(self):
+        pass
+
+    def create_pie_menu_items(self, context):
+        pass
+
+    def export_presets(self, file_path):
+        pass
+
+    def import_presets(self, file_path):
+        pass
+
+    def on_edit(self, context):
+        self.is_cache_valid = False
+
 if __name__ == "__main__":
     pass

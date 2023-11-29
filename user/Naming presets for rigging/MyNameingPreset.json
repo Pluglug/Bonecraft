@@ -3,20 +3,38 @@
   "addon_version": "0.3.5",
   "preset_name": "MyRiggingPreset",
   "Last_saved_date": "2023-03-15T12:00:00",
-  "Rigging_naming_conventions": {
-    "prefixes": ["CTRL", "DEF", "MCH"],
-    "middle_words": ["Arm", "Leg", "Spine"],
-    "suffixes": ["Tweak", "Pole"],
-    "counter_settings": {
-      "digits": 2
+  "Rigging_naming_presets": {
+    "Preset_1": {
+      "prefixes": ["CTRL", "DEF", "MCH"],
+      "middle_words": ["Arm", "Leg", "Spine"],
+      "suffixes": ["Tweak", "Pole"],
+      "counter_settings": {
+        "digits": 2
+      },
+      "side_pair_settings": {
+        "side_pair": "LR",
+        "separator": "_",
+        "position": "SUFFIX"
+      },
+      "separator_settings": {
+        "separator": "_"
+      }
     },
-    "side_pair_settings": {
-      "side_pair": "LR",
-      "separator": "_",
-      "position": "SUFFIX"
-    },
-    "separator_settings": {
-      "separator": "_"
+    "Preset_2": {
+      "prefixes": ["IK", "FK", "MAIN"],
+      "middle_words": ["Hand", "Foot", "Head"],
+      "suffixes": ["Ctrl", "Helper"],
+      "counter_settings": {
+        "digits": 3
+      },
+      "side_pair_settings": {
+        "side_pair": "RL",
+        "separator": "-",
+        "position": "PREFIX"
+      },
+      "separator_settings": {
+        "separator": "-"
+      }
     }
   }
 }
