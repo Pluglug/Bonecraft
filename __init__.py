@@ -19,8 +19,7 @@
 import bpy
 from . operators.edit_ops import operator_classes
 from . property_groups.bone_naming import *
-from . utils.vlog import log
-from . utils.debug_flags import *
+from debug import log, DBG_INIT
 import addon
 
 bl_info = {

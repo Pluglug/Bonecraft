@@ -1,6 +1,5 @@
 import bpy
-from utils.vlog import log
-from utils.debug_flags import *
+
 
 def get_ui_types_from_error():
     try:

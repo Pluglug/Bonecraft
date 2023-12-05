@@ -2,7 +2,7 @@ import contextlib
 import inspect
 import os
 
-from .addon import ADDON_ID
+from ..addon import ADDON_ID
 ADDON_ID = "bonecraft"
 
 

@@ -1,4 +1,4 @@
-from vlog import *
+from vlog import VisualLog
 
 
 def visual_log_in_wonderland():
@@ -146,8 +146,6 @@ def visual_log_in_wonderland3():
 
     # Deleting the instance
     del log
-
-
 
 
 if __name__ == "__main__":

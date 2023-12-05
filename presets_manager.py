@@ -3,9 +3,7 @@ import os
 from datetime import datetime
 from addon import ADDON_ID, VERSION
 
-from utils.vlog import log
-from utils.debug_flags import DBG_PRESET
-
+from debug import log, DBG_PRESET
 
 # def on_property_update(self, context):
 #     preset_manager.unsaved_changes = True

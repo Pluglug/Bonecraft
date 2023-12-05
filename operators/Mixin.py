@@ -1,7 +1,6 @@
 import bpy
 import traceback
-from ..utils.vlog import log
-from ..utils.debug_flags import *
+from debug import log, DBG_MIXIN
 import functools
 
 

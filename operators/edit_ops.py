@@ -1,9 +1,7 @@
 import bpy
 from . Mixin import ArmModeMixin, with_mode
-from ..utils.vlog import log
-from ..utils.debug_flags import *
-from ..utils.debug_utils import log_exec
 
+from debug import log, DBG_OPS, log_exec
 
 class BONECRAFT_OT_ParentSet(ArmModeMixin, bpy.types.Operator):
     """

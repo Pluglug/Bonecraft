@@ -1,8 +1,8 @@
 import re
 import bpy
 
-from utils.vlog import log
-from utils.debug_flags import DBG_RENAME
+# from property_groups import rename_preset
+from debug import log, DBG_RENAME
 from test_data import *
 
 
