@@ -2,8 +2,8 @@ import contextlib
 import inspect
 import os
 
-# from .addon import ADDON_ID
-ADDON_ID = "bonecraft"  # bpy.context.preferences.addons[__name__].bl_info['name']
+from .addon import ADDON_ID
+ADDON_ID = "bonecraft"
 
 
 CONSOLE_COLOR_INFO = '\033[34m'
@@ -46,6 +46,7 @@ class VisualLog:
         msg = caller_info + indent + ", ".join(str(arg) for arg in args)
         print(color + msg + '\033[0m')
 
+    # TODO: 引数でindentedできるようにする
     def header(self, msg):
         header_title = ADDON_ID
         header_length = max(len(msg), len(header_title))
@@ -93,4 +94,6 @@ log = VisualLog()
 
 
 if __name__ == "__main__":
+    # NOTO: インデントはこのように実装すべき
+    # DBG_TREE and logi(" " * len(path) + "/".join(path))
     pass
