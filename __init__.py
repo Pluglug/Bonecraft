@@ -88,3 +88,9 @@ if __name__ == "__main__":
 # ちょっと複雑
 
 # ひとつだけなら親子解除でいいか
+
+# JsonのかわりにYamlもよさそう。
+
+# Push Test
+# Push Test2
+# Push Test3
