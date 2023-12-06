@@ -1,20 +1,19 @@
+"""Debugging utilities for the project."""
 from debug.vlog import log
 from debug.debug_utils import log_exec
 
 from debug.debug_flags import *
 
 
-flags = []
-for name in dir():
-    if name.startswith("DBG"):
-        flags.append(name)
-
-
 __all__ = ["log"]
 __all__ += ["log_exec"]
 
-__all__ += flags
+# Collect all DBG_* flags
+__all__ += [name for name in globals() if name.startswith("DBG")]
 
 
-if __name__ == "__main__":
-    print(__all__)
+# Usage:
+# from debug import log, DBG_HOGE
+# DBG_HOGE and log.header("Start processing...")
+# for item in data_list:
+#     DBG_HOGE and log.info("Processing item:", item, "Status:", process_status)

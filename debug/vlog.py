@@ -90,7 +90,7 @@ log = VisualLog()
 
 
 # Usage:
-# log.header(*args)
+# log.header(msg)
 # log.info(*args)
 # log.error(*args)
 # log.warning(*args)
