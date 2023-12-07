@@ -6,65 +6,65 @@ from debug import log, DBG_RENAME
 from test_data import *
 
 
-class RenameCache:
-    def __init__(self, preset):
-        self.preset = preset
-        self.regex_cache = {}
-        DBG_RENAME and log.header("Initializing RenameCache")
-        self.update_cache()
+# class RenameCache:
+#     def __init__(self, preset):
+#         self.preset = preset
+#         self.regex_cache = {}
+#         DBG_RENAME and log.header("Initializing RenameCache")
+#         self.update_cache()
 
-    def update_cache(self):
-        DBG_RENAME and log.info("Updating regex cache")
-        self.regex_cache = {
-            "prefix": self.generate_regex_pattern(self.preset["prefixes"]),
-            "middle_word": self.generate_regex_pattern(self.preset["middle_words"]),
-            "suffix": self.generate_regex_pattern(self.preset["suffixes"]),
-            "side": self.generate_side_regex(self.preset["side_pair_settings"])
-        }
-        self.print_cache()
+#     def update_cache(self):
+#         DBG_RENAME and log.info("Updating regex cache")
+#         self.regex_cache = {
+#             "prefix": self.generate_regex_pattern(self.preset["prefixes"]),
+#             "middle_word": self.generate_regex_pattern(self.preset["middle_words"]),
+#             "suffix": self.generate_regex_pattern(self.preset["suffixes"]),
+#             "side": self.generate_side_regex(self.preset["side_pair_settings"])
+#         }
+#         self.print_cache()
 
-    def generate_regex_pattern(self, items):
-        pattern = re.compile(f"({'|'.join(re.escape(item) for item in items)})")
-        DBG_RENAME and log.info("Generated regex pattern:", pattern)
-        return pattern
+#     def generate_regex_pattern(self, items):
+#         pattern = re.compile(f"({'|'.join(re.escape(item) for item in items)})")
+#         DBG_RENAME and log.info("Generated regex pattern:", pattern)
+#         return pattern
 
-    def generate_side_regex(self, side_pair_settings):
-        side_pair = side_pair_settings["side_pair"]
-        separator = re.escape(side_pair_settings["separator"])
-        position = side_pair_settings["position"]
+#     def generate_side_regex(self, side_pair_settings):
+#         side_pair = side_pair_settings["side_pair"]
+#         separator = re.escape(side_pair_settings["separator"])
+#         position = side_pair_settings["position"]
 
-        # 左右ペアの値を分割
-        left, right = self.split_side_pair(side_pair)
+#         # 左右ペアの値を分割
+#         left, right = self.split_side_pair(side_pair)
 
-        # ポジションに基づいてパターンを生成
-        if position == 'PREFIX':
-            pattern = f"^({left}{separator}|{right}{separator})"
-        else:
-            pattern = f"({separator}{left}|{separator}{right})$"
+#         # ポジションに基づいてパターンを生成
+#         if position == 'PREFIX':
+#             pattern = f"^({left}{separator}|{right}{separator})"
+#         else:
+#             pattern = f"({separator}{left}|{separator}{right})$"
 
-        return re.compile(pattern)
+#         return re.compile(pattern)
 
-    def split_side_pair(self, side_pair):
-        if side_pair == 'LR':
-            return 'L', 'R'
-        elif side_pair == 'lr':
-            return 'l', 'r'
-        elif side_pair == 'LEFT_RIGHT':
-            return 'LEFT', 'RIGHT'
-        elif side_pair == 'left_right':
-            return 'left', 'right'
-        # その他の条件に対応する必要があればここに追加
-        else:
-            return 'L', 'R'  # デフォルトの値
+#     def split_side_pair(self, side_pair):
+#         if side_pair == 'LR':
+#             return 'L', 'R'
+#         elif side_pair == 'lr':
+#             return 'l', 'r'
+#         elif side_pair == 'LEFT_RIGHT':
+#             return 'LEFT', 'RIGHT'
+#         elif side_pair == 'left_right':
+#             return 'left', 'right'
+#         # その他の条件に対応する必要があればここに追加
+#         else:
+#             return 'L', 'R'  # デフォルトの値
 
-    def print_cache(self):
-        DBG_RENAME and log.header("Current Regex Cache")
-        for key, value in self.regex_cache.items():
-            DBG_RENAME and log.info(f"{key}: {value}")
+#     def print_cache(self):
+#         DBG_RENAME and log.header("Current Regex Cache")
+#         for key, value in self.regex_cache.items():
+#             DBG_RENAME and log.info(f"{key}: {value}")
 
 
-# 初期化とキャッシュの更新
-rename_cache = RenameCache(rename_preset)
+# # 初期化とキャッシュの更新
+# rename_cache = RenameCache(rename_preset)
 
 
 class BoneInfo:

@@ -1,24 +1,47 @@
 import bpy
 
 
-class MY_PT_Panel(bpy.types.Panel):
-    # パネルの定義 ...
+def ic_cb(value):
+    return 'CHECKBOX_HLT' if value else 'CHECKBOX_DEHLT'
 
-    def draw(self, context):
-        layout = self.layout
-        rigging_settings = context.scene.bone_naming_presets
 
-        # 現在選択されているプリセットの表示と編集
-        if rigging_settings.presets:
-            preset = rigging_settings.presets[rigging_settings.active_preset_index]
+class BONENAME_UL_PREFIX(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        layout.separator(factor=0.1)
+        layout.active = item.enabled
 
-            layout.prop(preset, "name")
+        layout.prop(item, "enabled", text="", emboss=False, icon=ic_cb(item.enabled))
 
-            # 接頭語、中間語、接尾語のリストの表示と編集
-            for prefix in preset.prefixes:
-                layout.prop(prefix, "name")
-            # 中間語と接尾語も同様に表示
+        layout.separator(factor=0.1)
 
-            # その他の設定の表示
-            layout.prop(preset.counter_settings, "digits")
-            # 他の設定も同様に表示
+        layout.prop(item, "name", text="", emboss=False)
+
+        layout.separator(factor=0.1)
+
+
+class BONENAME_UL_MIDDLE_WORD(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        layout.separator(factor=0.1)
+        layout.active = item.enabled
+
+        layout.prop(item, "enabled", text="", emboss=False, icon=ic_cb(item.enabled))
+
+        layout.separator(factor=0.1)
+
+        layout.prop(item, "name", text="", emboss=False)
+
+        layout.separator(factor=0.1)
+
+
+class BONENAME_UL_SUFFIX(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        layout.separator(factor=0.1)
+        layout.active = item.enabled
+
+        layout.prop(item, "enabled", text="", emboss=False, icon=ic_cb(item.enabled))
+
+        layout.separator(factor=0.1)
+
+        layout.prop(item, "name", text="", emboss=False)
+
+        layout.separator(factor=0.1)

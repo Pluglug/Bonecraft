@@ -1,4 +1,4 @@
-# import bpy
+import bpy
 
 # bl_info = {
 #     "name": "Simple Name Mod",
@@ -14,56 +14,56 @@
 # }
 
 
-# class RenameOptions(bpy.types.PropertyGroup):
-#     nm_enum_presuf: bpy.props.EnumProperty(
-#         name="Prefix/Suffix",
-#         items=[
-#             ("PRE", "Prefix", "Prefix"),
-#             ("SUF", "Suffix", "Suffix"),
-#         ],
-#         default="PRE",
-#     )
-#     nm_str_presuf: bpy.props.StringProperty(
-#         name="Prefix/Suffix",
-#         default="",
-#     )
-#     nm_reset_after_use: bpy.props.BoolProperty(
-#         name="Reset After Use",
-#         default=True,
-#     )
+class RenameOptions(bpy.types.PropertyGroup):
+    nm_enum_presuf: bpy.props.EnumProperty(
+        name="Prefix/Suffix",
+        items=[
+            ("PRE", "Prefix", "Prefix"),
+            ("SUF", "Suffix", "Suffix"),
+        ],
+        default="PRE",
+    )
+    nm_str_presuf: bpy.props.StringProperty(
+        name="Prefix/Suffix",
+        default="",
+    )
+    nm_reset_after_use: bpy.props.BoolProperty(
+        name="Reset After Use",
+        default=True,
+    )
 
 
-# class NameMod(bpy.types.Operator):
-#     bl_idname = "object.name_mod"
-#     bl_label = "Name Mod"
-#     bl_description = "Modify the name of the selected object"
-#     bl_options = {'REGISTER', 'UNDO'}
+class NameMod(bpy.types.Operator):
+    bl_idname = "object.name_mod"
+    bl_label = "Name Mod"
+    bl_description = "Modify the name of the selected object"
+    bl_options = {'REGISTER', 'UNDO'}
 
-#     nm_options: bpy.props.PointerProperty(type=RenameOptions)
+    nm_options: bpy.props.PointerProperty(type=RenameOptions)
 
-#     @classmethod
-#     def poll(cls, context):
-#         return context.object is not None
+    @classmethod
+    def poll(cls, context):
+        return context.object is not None
     
-#     def execute(self, context):
-#         objects = context.selected_objects
-#         for obj in objects:
-#             if self.nm_options.nm_enum_presuf == "PRE":
-#                 obj.name = self.nm_options.nm_str_presuf + "_" + obj.name
-#             elif self.nm_options.nm_enum_presuf == "SUF":
-#                 obj.name = obj.name + "_" + self.nm_options.nm_str_presuf
-#         if self.nm_options.nm_reset_after_use:
-#             self.nm_options.nm_str_presuf = ""
-#         return {'FINISHED'} 
+    def execute(self, context):
+        objects = context.selected_objects
+        for obj in objects:
+            if self.nm_options.nm_enum_presuf == "PRE":
+                obj.name = self.nm_options.nm_str_presuf + "_" + obj.name
+            elif self.nm_options.nm_enum_presuf == "SUF":
+                obj.name = obj.name + "_" + self.nm_options.nm_str_presuf
+        if self.nm_options.nm_reset_after_use:
+            self.nm_options.nm_str_presuf = ""
+        return {'FINISHED'} 
 
-#     def invoke(self, context, event):
-#         return context.window_manager.invoke_props_dialog(self)
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
 
-#     def draw(self, context):
-#         layout = self.layout
-#         layout.prop(self.nm_options, "nm_enum_presuf", expand=True)
-#         layout.prop(self.nm_options, "nm_str_presuf", text="")
-#         layout.prop(self.nm_options, "nm_reset_after_use")
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self.nm_options, "nm_enum_presuf", expand=True)
+        layout.prop(self.nm_options, "nm_str_presuf", text="")
+        layout.prop(self.nm_options, "nm_reset_after_use")
 
 
 # classes = [
