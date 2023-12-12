@@ -1,7 +1,9 @@
+import typing
 import bpy
+from bpy.types import Context, Event
 from . Mixin import ArmModeMixin, with_mode
+from ..debug import log, DBG_OPS, log_exec
 
-from debug import log, DBG_OPS, log_exec
 
 class BONECRAFT_OT_ParentSet(ArmModeMixin, bpy.types.Operator):
     """
@@ -22,12 +24,24 @@ class BONECRAFT_OT_ParentSet(ArmModeMixin, bpy.types.Operator):
         default='OFFSET'
     )
 
-    @with_mode('EDIT')
-    @log_exec
+    # @with_mode('EDIT')
+    # @log_exec
+    # def execute(self, context):
+    #     DBG_OPS and log.info(f"Parent type: {self.parent_type}")
+    #     bpy.ops.armature.parent_set(type=self.parent_type)
+    #     return {'FINISHED'}
+
     def execute(self, context):
-        DBG_OPS and log.info(f"Parent type: {self.parent_type}")
-        bpy.ops.armature.parent_set(type=self.parent_type)
+        with self.mode_context(context, 'EDIT'):
+            bpy.ops.armature.parent_set(type=self.parent_type)
         return {'FINISHED'}
+
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "parent_type", expand=True)
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
 
 
 class BONECRAFT_OT_ParentClear(ArmModeMixin, bpy.types.Operator):
@@ -49,11 +63,16 @@ class BONECRAFT_OT_ParentClear(ArmModeMixin, bpy.types.Operator):
         default='CLEAR'
     )
 
-    @with_mode('EDIT')
-    @log_exec
+    # @with_mode('EDIT')
+    # @log_exec
+    # def execute(self, context):
+    #     DBG_OPS and log.info(f"Parent type: {self.clear_type}")
+    #     bpy.ops.armature.parent_clear(type=self.clear_type)
+    #     return {'FINISHED'}
+
     def execute(self, context):
-        DBG_OPS and log.info(f"Parent type: {self.clear_type}")
-        bpy.ops.armature.parent_clear(type=self.clear_type)
+        with self.mode_context(context, 'EDIT'):
+            bpy.ops.armature.parent_clear(type=self.clear_type)
         return {'FINISHED'}
 
 

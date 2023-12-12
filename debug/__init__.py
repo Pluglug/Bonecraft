@@ -1,8 +1,8 @@
 """Debugging utilities for the project."""
-from debug.vlog import log
-from debug.debug_utils import log_exec
+from .vlog import log
+from .debug_utils import log_exec
 
-from debug.debug_flags import *
+from .debug_flags import *
 
 
 __all__ = ["log"]

@@ -1,7 +1,7 @@
 import re
 import bpy
-from debug import log, DBG_RENAME
-from operators.test_data import *
+from .. debug import log, DBG_RENAME
+from .. operators.test_data import *
 
 class BoneNamingPrefix(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Name")

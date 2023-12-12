@@ -19,8 +19,8 @@
 import bpy
 from . operators.edit_ops import operator_classes
 from . property_groups.bone_naming import *
-from debug import log, DBG_INIT
-import addon
+from . debug import log, DBG_INIT
+from . import addon
 
 bl_info = {
     "name": "BoneCraft",

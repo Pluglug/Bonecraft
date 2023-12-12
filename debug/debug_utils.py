@@ -1,5 +1,5 @@
-from debug.vlog import log
-from debug.debug_flags import DBG_OPS
+from .vlog import log
+from .debug_flags import DBG_OPS
 
 import functools
 
