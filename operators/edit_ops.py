@@ -1,7 +1,7 @@
 import typing
 import bpy
 from bpy.types import Context, Event
-from . Mixin import ArmModeMixin, with_mode
+from . mixin_utils import ArmModeMixin, with_mode
 from ..debug import log, DBG_OPS, log_exec
 
 

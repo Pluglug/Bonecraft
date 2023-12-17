@@ -67,6 +67,7 @@ class VisualLog:
     def warning(self, *args):
         self._log(CONSOLE_COLOR_WARNING, *args)
 
+    # FIXME: あまり使わないので削除するかも
     @contextlib.contextmanager
     def indented(self):
         self.increase()
