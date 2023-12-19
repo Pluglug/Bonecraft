@@ -55,11 +55,12 @@ class VisualLog:
         header = '-' * (header_length // 2 - len(header_title) // 2) + header_title + '-' * (header_length // 2 - len(header_title) // 2)
 
         print("")
-        self._log(CONSOLE_COLOR_HEADER, header)
+        # self._log(CONSOLE_COLOR_HEADER, header)
         self._log(CONSOLE_COLOR_HEADER, msg)
 
     def info(self, *args):
         self._log(CONSOLE_COLOR_INFO, *args)
+        # TODO: tabを使うように見た目をそろえたい
 
     def error(self, *args):
         self._log(CONSOLE_COLOR_ERROR, *args)
