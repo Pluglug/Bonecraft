@@ -6,14 +6,14 @@
   "Rigging_naming_presets": {
     "Preset_1": {
       "prefixes": ["CTRL", "DEF", "MCH"],
-      "middle_words": ["Arm", "Leg", "Spine"],
+      "middle_words": ["Root", "Arm", "Leg", "Spine"],
       "suffixes": ["Tweak", "Pole"],
       "counter_settings": {
         "digits": 2
       },
       "side_pair_settings": {
         "side_pair": "LR",
-        "separator": "_",
+        "separator": ".",
         "position": "SUFFIX"
       },
       "separator_settings": {

@@ -22,11 +22,11 @@ rename_preset = {
     "prefixes": ["CTRL", "DEF", "MCH"],
     "middle_words": ["Arm", "Leg", "Spine", "Hand", "Foot", "Head", "Finger", "Toe"],
     "suffixes": ["Tweak", "Pole"],
-    "counter_settings": {"digits": 2},
+    "counter": {"digits": 2},
     "side_pair_settings": {
         "side_pair": "LR",
-        "separator": "_",
-        "position": "SUFFIX"
+        "side_separator": ".",
+        "side_position": "SUFFIX"
     },
-    "separator_settings": {"separator": "_"}
+    "common_separator": {"separator": "_"}
 }
