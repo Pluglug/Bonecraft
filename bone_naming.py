@@ -11,7 +11,8 @@ class NamingElement:
         self.enabled = True
     
     def generate_regex(self, preset_data):
-
+        if self.key in preset_data:
+            self.regex = re.compile(f"({'|'.join(re.escape(item) for item in preset_data[self.key])})")
 
 
 
@@ -129,7 +130,6 @@ separator_items = [
 
 
 class BoneNamingPreset(bpy.types.PropertyGroup):
-    # ...
     name: bpy.props.StringProperty(name="Preset Name")
 
     prefixes: bpy.props.CollectionProperty(type=BoneNamingPrefix)
