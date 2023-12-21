@@ -1,7 +1,7 @@
 import re
 import bpy
-from . debug import log, DBG_RENAME
-from . test.test_data import *
+from debug import log, DBG_RENAME
+from .naming_test_utils import *
 
 
 class NamingElement:

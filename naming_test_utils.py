@@ -1,4 +1,8 @@
-import bpy
+import random
+import itertools
+
+from debug import log, DBG_PARSE
+
 
 test_bone_names = [
     "Arm.L", "Leg.R", "Spine_01", "Hand.l", "Foot.r", "Head", "Finger01.L", "Toe01.R"
@@ -30,10 +34,6 @@ rename_preset = {
     },
     "common_separator": {"separator": "_"}
 }
-
-
-import random
-import itertools
 
 
 def random_test_names(preset, num_cases=10):
@@ -143,3 +143,69 @@ def generate_test_names_all_cases(preset):
             test_cases.append(name)
 
     return test_cases
+
+
+def test():
+    # testings
+
+    # 開始時に時刻を表示
+    import time
+    log.header("Start testing NameParser")
+    log.info("Start time:", time.strftime("%Y/%m/%d %H:%M:%S"))
+
+    parser = NameParser(rename_preset)
+
+    test_names_suf = [
+        "CTRL_Arm_01.L",
+        "DEF_Hoge_Hoge_01.L",
+        "DEF_Leg_Tweak_01.R",
+        "Spine_01",
+        "MCH_Spine_01",
+        "Hand.L",
+        # "Hand_.L",
+        "Hand",
+        "_Hand",
+        "Leg_Tweak"
+    ]
+    log.info("side_position: SUFFIX")
+    # parser.test_parse(test_names_suf)
+    parser.test_parse_elements(test_names_suf)
+
+    rename_preset["side_pair_settings"]["side_position"] = "PREFIX"
+
+    # parser.compile_pattern()
+
+    test_names_pre = [
+        "L.Arm_01",
+        "L.CTRL_Hoge_Hoge_01",
+        "R.Leg_Tweak_01",
+        "Spine_01",
+        "CTRL_Spine_01",
+        "L.Hand",
+        "L._Hand",
+        "Hand",
+    ]
+    log.info("side_position: PREFIX")
+    # parser.test_parse(test_names_pre)
+    parser.test_parse_elements(test_names_pre)
+
+
+    rename_preset["counter"]["enabled"] = False
+
+    # parser.compile_pattern()
+
+    test_names_no_counter = [
+        "L.Arm",
+        "L.CTRL_Hoge_Hoge.001",
+        "R.Leg_Tweak",
+        "Spine_01",
+        "CTRL_Spine.001",
+        "L.Hand",
+        "L._Hand.001",
+        "Hand",
+    ]
+
+    log.info("side_position: SUFFIX, counter: disabled")
+    # parser.test_parse(test_names_no_counter)
+
+    parser.test_parse_elements(test_names_no_counter)
