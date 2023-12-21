@@ -4,20 +4,9 @@ import bpy
 from debug import log
 DBG_PARSE = True
 
+from test import test_data as td
 
-# test preset
-rename_preset = {
-    "prefixes": ["CTRL", "DEF", "MCH"],
-    "middle_words": ["Arm", "Leg", "Spine", "Hand", "Foot", "Head", "Finger", "Toe", "Hoge_Hoge"],
-    "suffixes": ["Tweak", "Pole"],
-    "counter": {"enabled": True, "digits": 2},
-    "side_pair_settings": {
-        "side_pair": "LR",
-        "side_separator": ".",
-        "side_position": "SUFFIX" # PREFIX or SUFFIX
-    },
-    "common_separator": {"separator": "_"}
-}
+rename_preset = td.rename_preset
 
 
 class NameParser:
@@ -51,53 +40,40 @@ class NameParser:
 
         return '^' + ''.join(filter(None, pattern_parts)) + '$'
     
-    def optional(self, pattern):
+    @staticmethod
+    def optional(pattern):
         return f'(?:{pattern})?'
 
-    def build_prefix_pattern(self, sep, optional=False):
+    def build_prefix_pattern(self, sep):
         prefix_pattern = '|'.join(self.preset['prefixes'])
         # return f'(?:(?P<prefix>{prefix_pattern}){sep})?'  # "CTRL_"
-        pattern = f'(?P<prefix>{prefix_pattern}){sep}'
-        if optional:  # TODO: 共通化
-            pattern = f'(?:{pattern})?'
-        return pattern
+        return f'(?P<prefix>{prefix_pattern}){sep}'
 
-    def build_middle_pattern(self, sep, optional=False):
+
+    def build_middle_pattern(self, sep):
         middle_pattern = '|'.join(map(re.escape, self.preset['middle_words']))
         # return f'(?:(?:{sep})?(?P<middle>{middle_pattern}))?'  # "_Arm"
-        pattern =  f'(?:{sep})?(?P<middle>{middle_pattern})'
-        if optional:
-            pattern = f'(?:{pattern})?'
-        return pattern
+        return f'(?:{sep})?(?P<middle>{middle_pattern})'
 
-    def build_suffix_pattern(self, sep, optional=False):
+
+    def build_suffix_pattern(self, sep):
         suffix_pattern = '|'.join(self.preset['suffixes'])
         # return f'(?:(?:{sep})?(?P<suffix>{suffix_pattern}))?'  # "_Tweak"
-        pattern = f'(?:{sep})?(?P<suffix>{suffix_pattern})'
-        if optional:
-            pattern = f'(?:{pattern})?'
-        return pattern
+        return f'(?:{sep})?(?P<suffix>{suffix_pattern})'
 
-    def build_counter_pattern(self, sep, optional=False):
+
+    def build_counter_pattern(self, sep):
         counter_pattern = r'\d{' + str(self.preset['counter']['digits']) + '}'
         # return f'(?:(?:{sep})?(?P<counter>{counter_pattern}))?'  # "_01"
-        pattern =  f'(?:{sep})?(?P<counter>{counter_pattern})'
-        if optional:
-            pattern = f'(?:{pattern})?'
-        return pattern
+        return f'(?:{sep})?(?P<counter>{counter_pattern})'
 
-    def build_side_pattern(self, side_position, side_sep, optional=False):
+
+    def build_side_pattern(self, side_position, side_sep):
         side_pattern = '[' + self.preset['side_pair_settings']['side_pair'] + ']'
         if side_position == 'PREFIX':
-            pattern = f'(?P<side>{side_pattern}){side_sep}'  # "L."
+            return f'(?P<side>{side_pattern}){side_sep}'  # "L."
         elif side_position == 'SUFFIX':
-            # pattern = f'(?:{side_sep})?(?P<side>{side_pattern})'  # ".L"
-            pattern = f'{side_sep}(?P<side>{side_pattern})'
-
-        if optional:
-            pattern = f'(?:{pattern})?'
-        return pattern
-
+            return f'{side_sep}(?P<side>{side_pattern})'
 
     def parse(self, name):
         match = self.regex.match(name)
@@ -162,7 +138,7 @@ class NameParser:
             #     log.warning(str(parsed_name) + " <- " + name)
 
 
-def test1():
+def test():
     # testings
 
     # 開始時に時刻を表示
@@ -170,10 +146,8 @@ def test1():
     log.header("Start testing NameParser")
     log.info("Start time:", time.strftime("%Y/%m/%d %H:%M:%S"))
 
-
     parser = NameParser(rename_preset)
 
-    # TODO: テストケース生成関数を作る
     test_names_suf = [
         "CTRL_Arm_01.L",
         "DEF_Hoge_Hoge_01.L",
@@ -228,13 +202,3 @@ def test1():
     # parser.test_parse(test_names_no_counter)
 
     parser.test_parse_elements(test_names_no_counter)
-
-test1()
-# import time
-# log.header("Start testing NameParser")
-# log.info("Start time:", time.strftime("%Y/%m/%d %H:%M:%S"))
-
-# parser = NameParser(rename_preset)
-
-# parser.parse_elements("CTRL_Arm_01.L")
-# parser.parse_elements("DEF_Hoge_Hoge_01.L")
