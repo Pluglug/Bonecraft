@@ -16,6 +16,29 @@ class StricterNameParser(NameParser):
     def optional(pattern):
         return f'(?:{pattern})?'
 
+    def build_prefix_pattern(self, sep):
+        prefix_pattern = '|'.join(self.preset['prefixes'])
+        return f'(?P<prefix>{prefix_pattern}){sep}'  
+
+    def build_middle_pattern(self, sep):
+        middle_pattern = '|'.join(map(re.escape, self.preset['middle_words']))
+        return f'(?:{sep})?(?P<middle>{middle_pattern})'
+
+    def build_suffix_pattern(self, sep):
+        suffix_pattern = '|'.join(self.preset['suffixes'])
+        return f'(?:{sep})?(?P<suffix>{suffix_pattern})'
+
+    def build_counter_pattern(self, sep):
+        counter_pattern = r'\d{' + str(self.preset['counter_settings']['digits']) + '}'
+        return f'(?:{sep})?(?P<counter>{counter_pattern})'
+
+    def build_side_pattern(self, side_position, side_sep):
+        side_pattern = self.preset['side_pair_settings']['side_pair']
+        if side_position == 'PREFIX':
+            return f'(?P<side>{side_pattern}){side_sep}'
+        elif side_position == 'SUFFIX':
+            return f'{side_sep}(?P<side>{side_pattern})'
+
     def compile_full_pattern(self):
         DBG_PARSE and log.header("Compiling NameParser full pattern")
         self.regex = re.compile(
