@@ -75,7 +75,7 @@ def random_test_names(preset, num_cases=10):
 
     return test_names
 
-print(random_test_names(rename_preset, 10))
+# print(random_test_names(rename_preset, 10))
 
 
 def generate_test_names(preset):

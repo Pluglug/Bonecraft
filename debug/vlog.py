@@ -61,7 +61,8 @@ class VisualLog:
     def info(self, *args):
         self._log(CONSOLE_COLOR_INFO, *args)
         # TODO: tabを使うように見た目をそろえたい
-
+        # TODO: 2つ以上の引数を渡したときに、つぎの引数を改行、インデントして表示するようにしたい
+    
     def error(self, *args):
         self._log(CONSOLE_COLOR_ERROR, *args)
 
