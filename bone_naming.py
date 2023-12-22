@@ -153,12 +153,12 @@ class BoneNamingPreset(bpy.types.PropertyGroup):
         name="Side Pair",
         description="Left/Right side pair format",
         items=[
-            ('LR', "L / R", "Upper case L/R", 1),
-            ('lr', "l / r", "Lower case l/r", 2),
-            ('LEFT_RIGHT', "LEFT / RIGHT", "Full word LEFT/RIGHT", 3),
-            ('left_right', "left / right", "Full word left/right", 4),
+            ('L|R', "L / R", "Upper case L/R", 1),
+            ('l|r', "l / r", "Lower case l/r", 2),
+            ('LEFT|RIGHT', "LEFT / RIGHT", "Full word LEFT/RIGHT", 3),
+            ('left|right', "left / right", "Full word left/right", 4),
         ],
-        default='LR'
+        default='L|R'
     )
     side_separator: bpy.props.EnumProperty(
         name="Side Separator",

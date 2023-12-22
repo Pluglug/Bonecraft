@@ -26,13 +26,16 @@ rename_preset = {
     "prefixes": ["CTRL", "DEF", "MCH"],
     "middle_words": ["Arm", "Leg", "Spine", "Hand", "Foot", "Head", "Finger", "Toe", "Hoge_Hoge"],
     "suffixes": ["Tweak", "Pole"],
-    "counter": {"enabled": True, "digits": 2},
-    "side_pair_settings": {
-        "side_pair": "LR",
-        "side_separator": ".",
-        "side_position": "SUFFIX" # PREFIX or SUFFIX
+    "counter_settings": {
+        "enabled": True, 
+        "digits": 2
     },
-    "common_separator": {"separator": "_"}
+    "side_pair_settings": {
+        "side_pair": "L|R",
+        "side_separator": ".",
+        "side_position": "SUFFIX"
+    },
+    "common_settings": {"common_separator": "_"}
 }
 
 
@@ -55,11 +58,11 @@ def random_test_names(preset, num_cases=10):
             name_parts.append(random.choice(preset['suffixes']))
 
         # カウンター
-        if preset['counter']['enabled']:
-            counter_format = f"{{:0{preset['counter']['digits']}d}}"
+        if preset['counter_settings']['enabled']:
+            counter_format = f"{{:0{preset['counter_settings']['digits']}d}}"
             name_parts.append(counter_format.format(random.randint(1, 10)))
 
-        test_names.append(preset['common_separator']['separator'].join(name_parts))
+        test_names.append(preset['common_settings']['common_separator'].join(name_parts))
 
         # 左右識別子を追加
         if preset['side_pair_settings']['side_pair'] and random.choice([True, False]):
@@ -78,7 +81,7 @@ print(random_test_names(rename_preset, 10))
 def generate_test_names(preset):
     """全ての組み合わせの名前を生成する"""
     test_cases = []
-    sep = preset["common_separator"]["separator"]
+    sep = preset["common_settings"]["common_separator"]
     side_sep = preset["side_pair_settings"]["side_separator"]
     side_position = preset["side_pair_settings"]["side_position"]
 
@@ -87,7 +90,8 @@ def generate_test_names(preset):
     middle_words = preset["middle_words"]
     suffixes = preset["suffixes"] + [None]
     sides = list(preset["side_pair_settings"]["side_pair"]) + [None]
-    counters = [f'{random.randint(1, 99):02d}' if preset["counter"]["enabled"] else None for _ in range(10)]
+    
+    counters = [f'{random.randint(1, 99):02d}' if preset["counter_settings"]["enabled"] else None for _ in range(10)]
 
     # 要素の組み合わせを生成
     for elements in itertools.product([True, False], repeat=4):
@@ -118,7 +122,7 @@ def generate_test_names(preset):
 def generate_test_names_all_cases(preset):
     """プリセット内の全ての組み合わせの名前を生成する"""
     test_cases = []
-    sep = preset["common_separator"]["separator"]
+    sep = preset["common_settings"]["common_separator"]
     side_sep = preset["side_pair_settings"]["side_separator"]
     side_position = preset["side_pair_settings"]["side_position"]
 

@@ -18,7 +18,7 @@
 
 import bpy
 from . operators.edit_ops import operator_classes
-from .naming.bone_naming import *
+from . bone_naming import *
 from . debug import log, DBG_INIT
 from . import addon
 
