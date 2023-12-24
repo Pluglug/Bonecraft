@@ -49,7 +49,7 @@ def register():
 
 def unregister():
     DBG_INIT and log.header("Unregistering BoneCraft operators...")
-    for cls in operator_classes:
+    for cls in reversed(operator_classes):
         bpy.utils.unregister_class(cls)
         DBG_INIT and log.info(f"Unregistered: {cls.__name__}")
 

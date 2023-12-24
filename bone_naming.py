@@ -4,18 +4,6 @@ from debug import log, DBG_RENAME
 from .naming_test_utils import *
 
 
-class NamingElement:
-    def __init__(self, key):
-        self.key = key
-        self.regex = None
-        self.enabled = True
-    
-    def generate_regex(self, preset_data):
-        if self.key in preset_data:
-            self.regex = re.compile(f"({'|'.join(re.escape(item) for item in preset_data[self.key])})")
-
-
-
 class BoneInfo:
     def __init__(self, pose_bone):
         self.pose_bone = pose_bone
@@ -28,84 +16,38 @@ class BoneInfo:
     def rename(self, new_name):
         self.new_name = new_name
         self.pose_bone.name = new_name
-    
-    # def build_new_name(self, prefix, middle_word, suffix):
-    #     """新しい名前を生成して返す"""
-    #     new_name = ""
-    #     if prefix:
-    #         new_name += prefix
-    #     if middle_word:
-    #         new_name += middle_word
-    #     if suffix:
-    #         new_name += suffix
-    #     return new_name
 
-    # 必要に応じて他のメソッドやプロパティを追加
-
-
-class RenameCache:
-    def __init__(self, preset):
-        self.preset = preset
-        self.regex_cache = {}
-        DBG_RENAME and log.header("Initializing RenameCache")
-        self.update_cache()
-
-    def update_cache(self):
-        """各種正規表現パターンを生成してキャッシュに格納する"""
-        DBG_RENAME and log.info("Updating regex cache")
-        self.regex_cache = {
-            "prefix": self.generate_regex_pattern(self.preset["prefixes"]),
-            "middle_word": self.generate_regex_pattern(self.preset["middle_words"]),
-            "suffix": self.generate_regex_pattern(self.preset["suffixes"]),
-            "side": self.generate_side_regex(self.preset["side_pair_settings"])
-        }
-        self.print_cache()
-
-    def generate_regex_pattern(self, items):
-        """正規表現パターンを生成して返す"""
-        pattern = re.compile(f"({'|'.join(re.escape(item) for item in items)})")
-        DBG_RENAME and log.info("Generated regex pattern:", pattern)
-        return pattern
-
-    def generate_side_regex(self, side_pair_settings):
-        """左右ペアの正規表現を生成して返す"""
-        side_pair = side_pair_settings["side_pair"]
-        separator = re.escape(side_pair_settings["separator"])
-        position = side_pair_settings["position"]
-
-        left, right = self.split_side_pair(side_pair)
-
-        if position == 'PREFIX':
-            pattern = f"^({left}{separator}|{right}{separator})"
-        else:
-            pattern = f"({separator}{left}|{separator}{right})$"
-
-        return re.compile(pattern)
-
-    def split_side_pair(self, side_pair):
-        """左右ペアを分割して返す"""
-        if side_pair == 'LR':
-            return 'L', 'R'
-        elif side_pair == 'lr':
-            return 'l', 'r'
-        elif side_pair == 'LEFT_RIGHT':
-            return 'LEFT', 'RIGHT'
-        elif side_pair == 'left_right':
-            return 'left', 'right'
-        else:
-            return 'L', 'R'  # デフォルト値
-
-    def print_cache(self):
-        log.header("Current Regex Cache")
-        for key, value in self.regex_cache.items():
-            log.info(f"{key}: {value}")
-
-    def get_regex_cache(self):
-        return self.regex_cache
+"""
+メモ
+ボーンの名前を変更する際は、pose modeで行う。
+Arm_obj.001
+    Armature.001
+        Bone.001
+        Bone.002
+Arm_obj.002
+    Armature.002
+        Bone.001
+        Bone.002
 
 
-# # 初期化とキャッシュの更新
-# rename_cache = RenameCache(rename_preset)
+        
+bpy.ops.pose.autoside_names(axis='XAXIS')
+XAXIS: Left/Right
+YAXIS: Front/Back
+ZAXIS: Top/Bottom
+
+
+bpy.ops.pose.flip_names(do_strip_numbers=False)
+選択した骨の名前の軸の接尾辞を反転させる
+do_strip_numbers: name.Left.001 -> name.Right
+
+親子関係でカウンターを付ける
+
+
+bpy.context.selected_pose_bones
+bpy.context.selected_pose_bones_from_active_object
+
+"""
     
 
 class BoneNamingPrefix(bpy.types.PropertyGroup):

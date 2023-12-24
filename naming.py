@@ -6,14 +6,9 @@ from debug import log, DBG_PARSE
 from naming_test_utils import rename_preset, random_test_names, generate_test_names
 
 
-class NamingElement:
-    """
-    リネームの要素を表すクラス
-    学習のため、いくつかの実装方法を試してみる
-    """
+class BoneData:
     def __init__(self, **kwargs):
         self.attributes = kwargs
-        DBG_PARSE and log.info(f"NamingElement: {self.attributes}")
 
     # def get(self, key, default=None):
     #     return self.attributes.get(key, default)
@@ -109,13 +104,20 @@ class NameParser:
         regex = re.compile(pattern)
         match = regex.search(name)
         if match:
-            return NamingElement(
-                type=element_type,
-                value=match.group(element_type),
-                start=match.start(element_type),
-                end=match.end(element_type),
-                remainder=name[:match.start(element_type)] + name[match.end(element_type):]
-            )
+            return {
+                'value': match.group(element_type),
+                'type': element_type,
+                'start': match.start(element_type),
+                'end': match.end(element_type),
+                'remainder': name[:match.start(element_type)] + name[match.end(element_type):]
+            }
+            # return NamingElement(
+            #     value=match.group(element_type),
+            #     type=element_type,
+            #     start=match.start(element_type),
+            #     end=match.end(element_type),
+            #     remainder=name[:match.start(element_type)] + name[match.end(element_type):]
+            # )
         else:
             return None
 
@@ -126,42 +128,51 @@ class NameParser:
 
         element_types = ['prefix', 'middle', 'suffix', 'counter', 'side']
         for name in name_list:
+            log.header("Parsing: " + name)
             parsed_name = self.search_elements(name, element_types)
-            log.header("Parsed name: " + name)
             log.info(f"Parsed name: {parsed_name}")
 
 
+class PoseBones:
+    def __init__(self, armature):
+        self.armature = armature
+        self.bones = self.armature.pose.bones
+
+
+
+
 if __name__ == "__main__":
-    # # -----test parse-----
-    # parser = NameParser(rename_preset)
-
-    # # rename_preset["side_pair_settings"]["side_position"] = "PREFIX"
-
-    # test_names = generate_test_names(rename_preset)
-    # parser.test_parse_elements(test_names)
-
-
-
-    # -----test NamingElement-----
-    DBG_PARSE = False
+    # -----test parse-----
+    log.enable_inspect()
     parser = NameParser(rename_preset)
-    test_name = "MCH_Toe_Tweak_12.R"
-    elements = parser.search_elements(test_name, ['prefix', 'middle', 'suffix', 'counter', 'side'])
-    # log.info(elements)
 
-    # 抽出した要素に対する操作の例
-    for key, element in elements.items():
-        if element:
-            # 名前の要素に関する情報をログに記録
-            log.info(f"{key}: {element}")
+    # rename_preset["side_pair_settings"]["side_position"] = "PREFIX"
 
-            # 特定の要素に対する操作
-            if key == 'counter':
-                # カウンター値を変更
-                new_counter_value = int(element.value) + 1
-                # element.set('value', str(new_counter_value))  # set method
-                # element.value = str(new_counter_value)  # __setattr__ method
-                element['value'] = str(new_counter_value)  # __setitem__ method
-                # setattr(element, 'value', str(new_counter_value))  # __setattr__ method
-                log.info(f"Updated counter: {element}")
-                break
+    test_names = generate_test_names(rename_preset)
+    parser.test_parse_elements(test_names)
+
+
+
+    # # -----test NamingElement-----
+    # DBG_PARSE = False
+    # parser = NameParser(rename_preset)
+    # test_name = "MCH_Toe_Tweak_12.R"
+    # elements = parser.search_elements(test_name, ['prefix', 'middle', 'suffix', 'counter', 'side'])
+    # # log.info(elements)
+
+    # # 抽出した要素に対する操作の例
+    # for key, element in elements.items():
+    #     if element:
+    #         # 名前の要素に関する情報をログに記録
+    #         log.info(f"{key}: {element}")
+
+    #         # 特定の要素に対する操作
+    #         if key == 'counter':
+    #             # カウンター値を変更
+    #             new_counter_value = int(element.value) + 1
+    #             # element.set('value', str(new_counter_value))  # set method
+    #             # element.value = str(new_counter_value)  # __setattr__ method
+    #             element['value'] = str(new_counter_value)  # __setitem__ method
+    #             # setattr(element, 'value', str(new_counter_value))  # __setattr__ method
+    #             log.info(f"Updated counter: {element}")
+    #             break
