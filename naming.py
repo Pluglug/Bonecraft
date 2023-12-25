@@ -3,7 +3,9 @@ import bpy
 
 from debug import log, DBG_PARSE
 
-from naming_test_utils import rename_preset, random_test_names, generate_test_names
+from naming_test_utils import (rename_preset, # test_selected_pose_bones, 
+                               random_test_names, generate_test_names, 
+                               )
 
 
 class BoneData:
@@ -54,7 +56,17 @@ class BoneData:
         return f'{self.__class__.__name__}({attrs})'
 
 
-class NameParser:
+class NamingElementInterface:
+    """すべての要素の基底クラス"""
+    def __init__(self, **kwargs):
+        pass
+    
+    
+
+
+
+# class NameParser:
+class NamingManager:
     def __init__(self, preset):
         self.preset = preset
         self.sep = re.escape(self.preset["common_settings"]["common_separator"])
@@ -106,50 +118,72 @@ class NameParser:
         if match:
             return {
                 'value': match.group(element_type),
-                'type': element_type,
-                'start': match.start(element_type),
-                'end': match.end(element_type),
-                'remainder': name[:match.start(element_type)] + name[match.end(element_type):]
+                # 'type': element_type,
+                # 'start': match.start(element_type),
+                # 'end': match.end(element_type),
+                # 'remainder': name[:match.start(element_type)] + name[match.end(element_type):]
             }
-            # return NamingElement(
-            #     value=match.group(element_type),
-            #     type=element_type,
-            #     start=match.start(element_type),
-            #     end=match.end(element_type),
-            #     remainder=name[:match.start(element_type)] + name[match.end(element_type):]
-            # )
         else:
             return None
+    
+    def rebuild_name(self, elements, new_elements=None):
+        n = []
+        for element_type in ['prefix', 'middle', 'suffix', 'counter']:
+            if new_elements and element_type in new_elements:
+                n.append(new_elements[element_type])
+            elif elements[element_type]:
+                n.append(elements[element_type]['value'])
+            
+        name = self.preset["common_settings"]["common_separator"].join(n)
 
-    def test_parse_elements(self, name_list):
-        import time
-        log.header("Testing NameParser")
-        log.info("Start time:", time.strftime("%Y/%m/%d %H:%M:%S"))  # TODO: vlogで実装
+        side_sep = self.preset["side_pair_settings"]["side_separator"]
+        side_position = self.preset["side_pair_settings"]["side_position"]
+        if new_elements and 'side' in new_elements:
+            side = new_elements['side']
+        else:
+            side = elements['side']['value']
 
-        element_types = ['prefix', 'middle', 'suffix', 'counter', 'side']
-        for name in name_list:
-            log.header("Parsing: " + name)
-            parsed_name = self.search_elements(name, element_types)
-            log.info(f"Parsed name: {parsed_name}")
-
-
-class PoseBones:
-    def __init__(self, armature):
-        self.armature = armature
-        self.bones = self.armature.pose.bones
+        if side:
+            if side_position == 'PREFIX':
+                name = f'{side}{side_sep}{name}'
+            else:
+                name = f'{name}{side_sep}{side}'
+        
+        return name
 
 
+class PoseBoneEditor:
+    pass
+
+
+def rename_bone_test(new_elements=None):
+    selected_bones_names = random_test_names(rename_preset, 5)
+    # DBG_PARSE and log.info(f"Selected bones: {selected_bones_names}")
+    nm = NamingManager(rename_preset)
+
+    for bone_name in selected_bones_names:
+        DBG_PARSE and log.info(f"Parse: {bone_name}")
+        elements = nm.search_elements(bone_name, ['prefix', 'middle', 'suffix', 'counter', 'side'])
+        # DBG_PARSE and log.info(f"Elements: {elements}")
+        new_name = nm.rebuild_name(elements, new_elements)
+        DBG_PARSE and log.info(f"New name: {new_name}")
+
+
+# testing
+new_elements = {'suffix': 'Tweak', 'counter': '12', 'side': 'R'}
+rename_bone_test(new_elements)
 
 
 if __name__ == "__main__":
+    pass
     # -----test parse-----
-    log.enable_inspect()
-    parser = NameParser(rename_preset)
+    # log.enable_inspect()
+    # parser = NameParser(rename_preset)
 
-    # rename_preset["side_pair_settings"]["side_position"] = "PREFIX"
+    # # rename_preset["side_pair_settings"]["side_position"] = "PREFIX"
 
-    test_names = generate_test_names(rename_preset)
-    parser.test_parse_elements(test_names)
+    # test_names = generate_test_names(rename_preset)
+    # parser.test_parse_elements(test_names)
 
 
 
