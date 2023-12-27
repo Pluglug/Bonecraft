@@ -73,7 +73,8 @@ class NamingManager:
         n = []
         for element_type in ['prefix', 'middle', 'suffix', 'counter']:
             if new_elements and element_type in new_elements:
-                n.append(new_elements[element_type])
+                if new_elements[element_type] != "":
+                    n.append(new_elements[element_type])
             elif elements[element_type]:
                 n.append(elements[element_type]['value'])
             
@@ -198,27 +199,26 @@ class BONECRAFT_PT_rename_bone(bpy.types.Panel):
         box = row.box()
         box.label(text="Prefix")
         self.draw_section(box, rename_preset['prefix'], 'prefix')
-        del_prefix = box.operator("bonecraft.rename_bone_test", text="Delete")
-        del_prefix.target_parts = 'prefix'
-        del_prefix.operation = 'delete'
+        self.draw_delete_button(box, 'prefix')
 
         row.separator()
 
         box = row.box()
         box.label(text="Middle")
         self.draw_section(box, rename_preset['middle'], 'middle')
-        del_middle = box.operator("bonecraft.rename_bone_test", text="Delete")
-        del_middle.target_parts = 'middle'
-        del_middle.operation = 'delete'
+        self.draw_delete_button(box, 'middle')
 
         row.separator()
 
         box = row.box()
         box.label(text="Suffix")
         self.draw_section(box, rename_preset['suffix'], 'suffix')
-        del_suffix = box.operator("bonecraft.rename_bone_test", text="Delete")
-        del_suffix.target_parts = 'suffix'
-        del_suffix.operation = 'delete'
+        self.draw_delete_button(box, 'suffix')
+
+    def draw_delete_button(self, box, target_parts):
+        del_button = box.operator("bonecraft.rename_bone_test", text="Delete", icon='CANCEL')
+        del_button.target_parts = target_parts
+        del_button.operation = 'delete'
 
     def draw_section(self, box, items, target_parts):
         max_items = 5
