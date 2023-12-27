@@ -3,8 +3,8 @@ import bpy
 
 from .operators.mixin_utils import ArmModeMixin
 
-from debug import log, DBG_PARSE
-from naming_test_utils import (rename_preset, # test_selected_pose_bones, 
+from .debug import log, DBG_PARSE, DBG_RENAME
+from .naming_test_utils import (rename_preset, # test_selected_pose_bones, 
                                random_test_names, generate_test_names, 
                                )
 
@@ -24,7 +24,7 @@ class NamingManager:
 
     def build_prefix_pattern(self):
         prefix_pattern = '|'.join(self.preset['prefix'])
-        return f'(?P<prefix>{prefix_pattern}){self.sep}'  
+        return f'(?P<prefix>{prefix_pattern})(?:{self.sep})?'  
 
     def build_middle_pattern(self):
         middle_pattern = '|'.join(map(re.escape, self.preset['middle']))
@@ -81,10 +81,13 @@ class NamingManager:
 
         side_sep = self.preset["side_pair_settings"]["side_separator"]
         side_position = self.preset["side_pair_settings"]["side_position"]
+        
         if new_elements and 'side' in new_elements:
             side = new_elements['side']
-        else:
+        elif elements['side']:
             side = elements['side']['value']
+        else:
+            side = None
 
         if side:
             if side_position == 'PREFIX':
@@ -126,8 +129,7 @@ class BONECRAFT_OT_rename_bone(bpy.types.Operator, ArmModeMixin):
     bl_description = "Testing renaming bones"
 
     nm = NamingManager(rename_preset)
-        
-    """操作対象となるNameElement"""
+    
     target_parts: bpy.props.EnumProperty(
         name="Target Parts",
         description="Target parts to rename",
@@ -140,7 +142,6 @@ class BONECRAFT_OT_rename_bone(bpy.types.Operator, ArmModeMixin):
         ],
         default='middle'
     )
-    """追加/入替もしくは削除"""
     operation: bpy.props.EnumProperty(
         name="Operation",
         description="Operation to perform",
@@ -150,27 +151,18 @@ class BONECRAFT_OT_rename_bone(bpy.types.Operator, ArmModeMixin):
         ],
         default='add/replace'
     )
-
-    preset_enum_items = []
-
-    def get_preset_enum(self):
-        if not BONECRAFT_OT_rename_bone.preset_enum_items:
-            enum_items = []
-            for i, preset in enumerate(rename_preset[self.target_parts]):
-                enum_items.append((str(i), preset, preset, i))
-            BONECRAFT_OT_rename_bone.preset_enum_items = enum_items
-        return BONECRAFT_OT_rename_bone.preset_enum_items
-
-    preset_index: bpy.props.EnumProperty(
-        name="Preset",
-        description="Preset to use",
-        items=get_preset_enum,
-        default='0'
+    preset_index: bpy.props.IntProperty(
+        name="Preset Index",
+        description="Preset index to use",
+        default=0,
+        min=0,
+        max=100
     )
 
     def execute(self, context):
-        with self.mode_context(self, context, 'POSE'):
-            self.rename_selected_pose_bones()
+        DBG_RENAME and log.info(f"Target parts: {self.target_parts}", f"Operation: {self.operation}", f"Preset index: {self.preset_index}")
+        with self.mode_context(context, 'POSE'):
+            self.rename_selected_pose_bones(context)
         return {'FINISHED'}
     
     def rename_selected_pose_bones(self, context):
@@ -181,16 +173,82 @@ class BONECRAFT_OT_rename_bone(bpy.types.Operator, ArmModeMixin):
         elements = self.nm.search_elements(bone.name, ['prefix', 'middle', 'suffix', 'counter', 'side'])
 
         if self.operation == 'add/replace':
-            new_elements = self.nm.get_element_preset(self.target_parts)[self.preset_index]
+            new_elements = {self.target_parts: rename_preset[self.target_parts][self.preset_index]} 
         elif self.operation == 'delete':
-            new_elements = {self.target_parts: None}
+            new_elements = {self.target_parts: ""}
 
         new_name = self.nm.rebuild_name(elements, new_elements)
         bone.name = new_name
 
 
+class BONECRAFT_PT_rename_bone(bpy.types.Panel):
+    bl_label = "Rename Bone"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "BoneCraft"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+
+        row = layout.row(align=True)
+
+        box = row.box()
+        box.label(text="Prefix")
+        self.draw_section(box, rename_preset['prefix'], 'prefix')
+        del_prefix = box.operator("bonecraft.rename_bone_test", text="Delete")
+        del_prefix.target_parts = 'prefix'
+        del_prefix.operation = 'delete'
+
+        row.separator()
+
+        box = row.box()
+        box.label(text="Middle")
+        self.draw_section(box, rename_preset['middle'], 'middle')
+        del_middle = box.operator("bonecraft.rename_bone_test", text="Delete")
+        del_middle.target_parts = 'middle'
+        del_middle.operation = 'delete'
+
+        row.separator()
+
+        box = row.box()
+        box.label(text="Suffix")
+        self.draw_section(box, rename_preset['suffix'], 'suffix')
+        del_suffix = box.operator("bonecraft.rename_bone_test", text="Delete")
+        del_suffix.target_parts = 'suffix'
+        del_suffix.operation = 'delete'
+
+    def draw_section(self, box, items, target_parts):
+        max_items = 5
+
+        # 計算された列数
+        num_col = len(items) // max_items
+        num_col = max(1, num_col)  # 少なくとも1列は確保
+
+        # 列のスケールを設定するための基準値
+        scale_factor = 0.8 * num_col
+
+        if num_col > 1:
+            col = box.column_flow(columns=num_col, align=False)
+            # 各列のscale_xを設定
+            col.scale_x = scale_factor
+        else:
+            col = box.column(align=False)
+
+        for i, item in enumerate(items):
+            ops = col.operator("bonecraft.rename_bone_test", text=item)
+            ops.operation = 'add/replace'
+            ops.preset_index = i
+            ops.target_parts = target_parts
+
+
+
+
 operator_classes = [
     BONECRAFT_OT_rename_bone,
+    BONECRAFT_PT_rename_bone,
 ]
 
 
@@ -231,6 +289,6 @@ if __name__ == "__main__":
     #             log.info(f"Updated counter: {element}")
     #             break
 
-    # # rebuild test
-    # new_elements = {'suffix': 'Tweak', 'counter': '12', 'side': 'R'}
-    # rename_bone_test(new_elements)
+    # rebuild test
+    new_elements = {'suffix': 'Tweak', 'counter': '12', 'side': 'R'}
+    rename_bone_test(new_elements)

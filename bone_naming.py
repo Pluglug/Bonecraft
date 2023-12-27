@@ -1,6 +1,6 @@
 import re
 import bpy
-from debug import log, DBG_RENAME
+from .debug import log, DBG_RENAME
 from .naming_test_utils import *
 
 

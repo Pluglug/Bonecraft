@@ -4,6 +4,7 @@ import functools
 import contextlib
 
 from ..debug import log, DBG_MIXIN
+# from ..debug import log, DBG_MIXIN  # よくわからん
 
 
 def with_mode(mode):

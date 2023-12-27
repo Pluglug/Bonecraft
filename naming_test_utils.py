@@ -1,7 +1,7 @@
 import random
 import itertools
 
-from debug import log, DBG_PARSE
+from .debug import log, DBG_PARSE
 
 
 test_bone_names = [
@@ -26,7 +26,7 @@ test_bone_names = [
 # これによって、さらに柔軟な名前の組み合わせを生成できるようになる
 rename_preset = {
     "prefix": ["CTRL", "DEF", "MCH"],
-    "middle": ["Arm", "Leg", "Spine", "Hand", "Foot", "Head", "Finger", "Toe", "Hoge_Hoge"],
+    "middle": ["Root", "Arm", "Leg", "Spine", "Hand", "Foot", "Head", "Finger", "Toe", "Tail"],
     "suffix": ["Tweak", "Pole"],
     "counter_settings": {
         "enabled": True, 
