@@ -8,64 +8,6 @@ from naming_test_utils import (rename_preset, # test_selected_pose_bones,
                                )
 
 
-class BoneData:
-    def __init__(self, **kwargs):
-        self.attributes = kwargs
-
-    # def get(self, key, default=None):
-    #     return self.attributes.get(key, default)
-
-    # def set(self, key, value):
-    #     self.attributes[key] = value
-
-    def __getitem__(self, key):
-        return self.attributes[key]
-
-    def __setitem__(self, key, value):
-        self.attributes[key] = value
-    
-    def __delitem__(self, key):
-        del self.attributes[key]
-
-    def __contains__(self, key):
-        return key in self.attributes
-
-    def keys(self):
-        return self.attributes.keys()
-    
-    def values(self):
-        return self.attributes.values()
-    
-    def items(self):
-        return self.attributes.items()
-    
-    def __getattr__(self, name):
-        try:
-            return self.attributes[name]
-        except KeyError:
-            raise AttributeError(f'{name} is not defined')
-
-    def __setattr__(self, name, value):
-        if name == 'attributes':
-            super().__setattr__(name, value)
-        else:
-            self.attributes[name] = value
-    
-    def __repr__(self):
-        attrs = ', '.join(f'{k}={v!r}' for k, v in self.attributes.items())
-        return f'{self.__class__.__name__}({attrs})'
-
-
-class NamingElementInterface:
-    """すべての要素の基底クラス"""
-    def __init__(self, **kwargs):
-        pass
-    
-    
-
-
-
-# class NameParser:
 class NamingManager:
     def __init__(self, preset):
         self.preset = preset
