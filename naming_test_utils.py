@@ -22,10 +22,12 @@ test_bone_names = [
 #      bpy.data.objects['MyArmature'].pose.bones["Finger02.L"]
 # ]
 
+# TODO: 将来的に、接頭語などではなく、順番で指定できるようにする
+# これによって、さらに柔軟な名前の組み合わせを生成できるようになる
 rename_preset = {
-    "prefixes": ["CTRL", "DEF", "MCH"],
-    "middle_words": ["Arm", "Leg", "Spine", "Hand", "Foot", "Head", "Finger", "Toe", "Hoge_Hoge"],
-    "suffixes": ["Tweak", "Pole"],
+    "prefix": ["CTRL", "DEF", "MCH"],
+    "middle": ["Arm", "Leg", "Spine", "Hand", "Foot", "Head", "Finger", "Toe", "Hoge_Hoge"],
+    "suffix": ["Tweak", "Pole"],
     "counter_settings": {
         "enabled": True, 
         "digits": 2

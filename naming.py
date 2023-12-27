@@ -1,8 +1,9 @@
 import re
 import bpy
 
-from debug import log, DBG_PARSE
+from .operators.mixin_utils import ArmModeMixin
 
+from debug import log, DBG_PARSE
 from naming_test_utils import (rename_preset, # test_selected_pose_bones, 
                                random_test_names, generate_test_names, 
                                )
@@ -22,15 +23,15 @@ class NamingManager:
         return build_func()
 
     def build_prefix_pattern(self):
-        prefix_pattern = '|'.join(self.preset['prefixes'])
+        prefix_pattern = '|'.join(self.preset['prefix'])
         return f'(?P<prefix>{prefix_pattern}){self.sep}'  
 
     def build_middle_pattern(self):
-        middle_pattern = '|'.join(map(re.escape, self.preset['middle_words']))
+        middle_pattern = '|'.join(map(re.escape, self.preset['middle']))
         return f'(?:{self.sep})?(?P<middle>{middle_pattern})'
 
     def build_suffix_pattern(self):
-        suffix_pattern = '|'.join(self.preset['suffixes'])
+        suffix_pattern = '|'.join(self.preset['suffix'])
         return f'(?:{self.sep})?(?P<suffix>{suffix_pattern})'
 
     def build_counter_pattern(self):
@@ -92,6 +93,14 @@ class NamingManager:
                 name = f'{name}{side_sep}{side}'
         
         return name
+    
+    def get_element_preset(self, element_type):
+        if element_type in ['prefix', 'middle', 'suffix']:
+            return self.preset[element_type]
+        elif element_type == 'counter':
+            return None
+        elif element_type == 'side':
+            return None
 
 
 class PoseBoneEditor:
@@ -111,9 +120,78 @@ def rename_bone_test(new_elements=None):
         DBG_PARSE and log.info(f"New name: {new_name}")
 
 
-# testing
-new_elements = {'suffix': 'Tweak', 'counter': '12', 'side': 'R'}
-rename_bone_test(new_elements)
+class BONECRAFT_OT_rename_bone(bpy.types.Operator, ArmModeMixin):
+    bl_idname = "bonecraft.rename_bone_test"
+    bl_label = "Rename Bone Test"
+    bl_description = "Testing renaming bones"
+
+    nm = NamingManager(rename_preset)
+        
+    """操作対象となるNameElement"""
+    target_parts: bpy.props.EnumProperty(
+        name="Target Parts",
+        description="Target parts to rename",
+        items=[
+            ('prefix', "Prefix", "Prefix", 1),
+            ('middle', "Middle", "Middle", 2),
+            ('suffix', "Suffix", "Suffix", 3),
+            # ('counter', "Counter", "Counter", 4),
+            ('side', "Side", "Side", 5),
+        ],
+        default='middle'
+    )
+    """追加/入替もしくは削除"""
+    operation: bpy.props.EnumProperty(
+        name="Operation",
+        description="Operation to perform",
+        items=[
+            ('add/replace', "Add/Replace", "Add or replace", 1),
+            ('delete', "Delete", "Delete", 2),
+        ],
+        default='add/replace'
+    )
+
+    preset_enum_items = []
+
+    def get_preset_enum(self):
+        if not BONECRAFT_OT_rename_bone.preset_enum_items:
+            enum_items = []
+            for i, preset in enumerate(rename_preset[self.target_parts]):
+                enum_items.append((str(i), preset, preset, i))
+            BONECRAFT_OT_rename_bone.preset_enum_items = enum_items
+        return BONECRAFT_OT_rename_bone.preset_enum_items
+
+    preset_index: bpy.props.EnumProperty(
+        name="Preset",
+        description="Preset to use",
+        items=get_preset_enum,
+        default='0'
+    )
+
+    def execute(self, context):
+        with self.mode_context(self, context, 'POSE'):
+            self.rename_selected_pose_bones()
+        return {'FINISHED'}
+    
+    def rename_selected_pose_bones(self, context):
+        for bone in context.selected_pose_bones:
+            self.rename_bone(bone)
+
+    def rename_bone(self, bone):
+        elements = self.nm.search_elements(bone.name, ['prefix', 'middle', 'suffix', 'counter', 'side'])
+
+        if self.operation == 'add/replace':
+            new_elements = self.nm.get_element_preset(self.target_parts)[self.preset_index]
+        elif self.operation == 'delete':
+            new_elements = {self.target_parts: None}
+
+        new_name = self.nm.rebuild_name(elements, new_elements)
+        bone.name = new_name
+
+
+operator_classes = [
+    BONECRAFT_OT_rename_bone,
+]
 
 
 if __name__ == "__main__":
@@ -152,3 +230,7 @@ if __name__ == "__main__":
     #             # setattr(element, 'value', str(new_counter_value))  # __setattr__ method
     #             log.info(f"Updated counter: {element}")
     #             break
+
+    # # rebuild test
+    # new_elements = {'suffix': 'Tweak', 'counter': '12', 'side': 'R'}
+    # rename_bone_test(new_elements)
