@@ -17,8 +17,6 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
-from . operators import edit_ops
-from . import naming
 from . bone_naming import *
 from . debug import log, DBG_INIT
 from . import addon
@@ -40,21 +38,27 @@ bl_info = {
 addon.VERSION = bl_info["version"]
 addon.BL_VERSION = bl_info["blender"]
 
-operator_classes = []
-operator_classes.extend(edit_ops.operator_classes)
-operator_classes.extend(naming.operator_classes)
+
+from . operators import edit_ops
+from . import naming
+from . import naming_ui
+
+classes = []
+classes.extend(edit_ops.operator_classes)
+classes.extend(naming.operator_classes)
+classes.extend(naming_ui.panel_classes)
 
 
 def register():
     DBG_INIT and log.header("Registering BoneCraft operators...")
-    for cls in operator_classes:
+    for cls in classes:
         bpy.utils.register_class(cls)
         DBG_INIT and log.info(f"Registered: {cls.__name__}")
 
 
 def unregister():
     DBG_INIT and log.header("Unregistering BoneCraft operators...")
-    for cls in reversed(operator_classes):
+    for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
         DBG_INIT and log.info(f"Unregistered: {cls.__name__}")
 

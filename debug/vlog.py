@@ -1,5 +1,6 @@
 import contextlib
 import inspect
+import time
 import os
 
 try:
@@ -18,6 +19,8 @@ class VisualLog:
     def __init__(self):
         self.indent_level = 0
         self.inspect_enabled = False
+        self.timer = time.time()
+
 
     def enable_inspect(self):
         self.inspect_enabled = True
@@ -49,13 +52,13 @@ class VisualLog:
         print(color + msg + '\033[0m')
 
     # TODO: 引数でindentedできるようにする
-    def header(self, msg):
-        header_title = ADDON_ID
+    def header(self, msg, header=True, header_title=None):
+        header_title = header_title if header_title else ADDON_ID
         header_length = max(len(msg), len(header_title))
         header = '-' * (header_length // 2 - len(header_title) // 2) + header_title + '-' * (header_length // 2 - len(header_title) // 2)
 
         print("")
-        # self._log(CONSOLE_COLOR_HEADER, header)
+        self._log(CONSOLE_COLOR_HEADER, header) if header else None
         self._log(CONSOLE_COLOR_HEADER, msg)
 
     def info(self, *args):
@@ -87,6 +90,15 @@ class VisualLog:
 
     def reset_indent(self):
         self.indent_level = 0
+    
+    def reset_timer(self, msg):
+        self.header(msg, header=False)
+        self.timer = time.time()
+
+    def time(self, msg):
+        now = time.time()
+        self.info(f"{msg}: {now - self.timer}")
+        self.timer = now
 
 
 log = VisualLog()
