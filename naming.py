@@ -48,7 +48,47 @@ class NamingManager:
         elif side_position == 'SUFFIX':
             return f'{side_sep}(?P<side>{side_pattern})'
     
-    def search_elements(self, name, element_types):
+    def build_bl_counter_pattern(self):
+        """Buildin Blender counter pattern like .001 """
+        return r'\.\d{3}$'
+
+    def check_duplicate_names(self, name, armature):
+        return name in (bone.name for bone in armature.pose.bones)
+
+    def replace_bl_counter(self, elements, armature):  # armatureどーしよー boneから取れない?
+        # Blenderのカウンターを特定する正規表現パターン
+        bl_counter_pattern = self.build_bl_counter_pattern()
+        bl_counter_regex = re.compile(bl_counter_pattern)
+        bl_counter_match = bl_counter_regex.search(elements['remainder'])
+
+        if bl_counter_match:
+            # Blenderのカウンター値（例：.001）を取得し、整数に変換
+            bl_counter_value = int(bl_counter_match.group()[1:])
+
+            # 元のカウンター値がある場合は置き換え、なければ新しく設定
+            if 'counter' in elements and elements['counter']:
+                elements['counter']['value'] = f"{bl_counter_value:03d}"  # 3桁でフォーマット
+            else:
+                elements['counter'] = {'value': f"{bl_counter_value:03d}"}
+
+            # 元のBlenderカウンターを削除
+            elements['remainder'] = bl_counter_regex.sub('', elements['remainder'])
+
+        # 名前を再構築
+        new_name = self.rebuild_name(elements)
+        
+        # 名前が重複している場合は、カウンターをインクリメントして再度検証
+        while self.check_duplicate_names(new_name, armature):
+            bl_counter_value += 1  # カウンターをインクリメント
+            elements['counter']['value'] = f"{bl_counter_value:03d}"  # 更新
+            new_name = self.rebuild_name(elements)  # 名前を再構築
+
+        # 重複がなくなった新しい名前を返す
+        return new_name
+
+    
+    def search_elements(self, name, element_types=None):
+        element_types = element_types or ['prefix', 'middle', 'suffix', 'counter', 'side', 'bl_counter']
         elements = {element: None for element in element_types}
         for part in element_types:
             elements[part] = self.search_element(name, part)
@@ -70,6 +110,9 @@ class NamingManager:
             return None
     
     def rebuild_name(self, elements, new_elements=None):
+        if elements['bl_counter']:
+            elements = self.replace_bl_counter(elements)  # TODO: Refactor
+        
         n = []
         for element_type in ['prefix', 'middle', 'suffix', 'counter']:
             if new_elements and element_type in new_elements:
@@ -106,13 +149,13 @@ def rename_bone_test(new_elements=None):
 
     for bone_name in selected_bones_names:
         DBG_PARSE and log.info(f"Parse: {bone_name}")
-        elements = nm.search_elements(bone_name, ['prefix', 'middle', 'suffix', 'counter', 'side'])
+        elements = nm.search_elements(bone_name)
         # DBG_PARSE and log.info(f"Elements: {elements}")
         new_name = nm.rebuild_name(elements, new_elements)
         DBG_PARSE and log.info(f"New name: {new_name}")
 
 
-class BONECRAFT_OT_rename_bone(bpy.types.Operator, ArmModeMixin):
+class BONECRAFT_OT_RenameBone(bpy.types.Operator, ArmModeMixin):
     bl_idname = "bonecraft.rename_bone_test"
     bl_label = "Rename Bone Test"
     bl_description = "Testing renaming bones"
@@ -127,7 +170,7 @@ class BONECRAFT_OT_rename_bone(bpy.types.Operator, ArmModeMixin):
             ('middle', "Middle", "Middle", 2),
             ('suffix', "Suffix", "Suffix", 3),
             # ('counter', "Counter", "Counter", 4),
-            ('side', "Side", "Side", 5),
+            # ('side', "Side", "Side", 5),
         ],
         default='middle'
     )
@@ -159,7 +202,8 @@ class BONECRAFT_OT_rename_bone(bpy.types.Operator, ArmModeMixin):
             self.rename_bone(bone)
 
     def rename_bone(self, bone):
-        elements = self.nm.search_elements(bone.name, ['prefix', 'middle', 'suffix', 'counter', 'side'])
+        DBG_RENAME and log.info(f"Rename bone: {bone.name}")
+        elements = self.nm.search_elements(bone.name)
 
         if self.operation == 'add/replace':
             new_elements = {self.target_parts: rename_preset[self.target_parts][self.preset_index]} 
@@ -168,16 +212,54 @@ class BONECRAFT_OT_rename_bone(bpy.types.Operator, ArmModeMixin):
 
         new_name = self.nm.rebuild_name(elements, new_elements)
         bone.name = new_name
+        DBG_RENAME and log.info(f"New name: {bone.name}")
 
 
+class BONECRAFT_OT_ToggleSide(bpy.types.Operator, ArmModeMixin):
+    bl_idname = "bonecraft.toggle_side"
+    bl_label = "Toggle Side"
+    bl_description = "Toggle side"
 
+    nm = NamingManager(rename_preset)
 
+    side_pair_index: bpy.props.IntProperty(
+        name="Side Pair Index",
+        description="Side pair index to use",
+        default=0,
+        min=0,
+        max=1
+    )
 
+    def execute(self, context):
+        DBG_RENAME and log.header("Toggle Side")
+        with self.mode_context(context, 'POSE'):
+            self.toggle_side_selected_pose_bones(context)
+        return {'FINISHED'}
+    
+    def toggle_side_selected_pose_bones(self, context):
+        for bone in context.selected_pose_bones:
+            self.toggle_side(bone)
+    
+    def toggle_side(self, bone):
+        DBG_RENAME and log.info(f"Toggle side: {bone.name}")
+        elements = self.nm.search_elements(bone.name)
+        side_pair = self.nm.get_side_pair()
+        if elements['side']:
+            if elements['side']['value'] == side_pair[self.side_pair_index]:
+                new_elements = {'side': ""}
+            else:
+                new_elements = {'side': side_pair[self.side_pair_index]}
+        else:
+            new_elements = {'side': side_pair[self.side_pair_index]}  # TODO: Refactor
+        
+        new_name = self.nm.rebuild_name(elements, new_elements)
+        bone.name = new_name
+        DBG_RENAME and log.info(f"New name: {bone.name}")
 
 
 operator_classes = [
-    BONECRAFT_OT_rename_bone,
-    BONECRAFT_PT_rename_bone,
+    BONECRAFT_OT_RenameBone,
+    BONECRAFT_OT_ToggleSide,
 ]
 
 
@@ -218,6 +300,6 @@ if __name__ == "__main__":
     #             log.info(f"Updated counter: {element}")
     #             break
 
-    # rebuild test
-    new_elements = {'suffix': 'Tweak', 'counter': '12', 'side': 'R'}
-    rename_bone_test(new_elements)
+    # # rebuild test
+    # new_elements = {'suffix': 'Tweak', 'counter': '12', 'side': 'R'}
+    # rename_bone_test(new_elements)
