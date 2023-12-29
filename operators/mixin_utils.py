@@ -3,8 +3,10 @@ import traceback
 import functools
 import contextlib
 
-from ..debug import log, DBG_MIXIN
-# from ..debug import log, DBG_MIXIN  # よくわからん
+try:
+    from ..debug import log, DBG_MIXIN
+except:
+    from debug import log, DBG_MIXIN
 
 
 def with_mode(mode):

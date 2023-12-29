@@ -1,8 +1,10 @@
 import random
 import itertools
 
-from .debug import log, DBG_PARSE
-
+try:
+    from .debug import log, DBG_PARSE
+except:
+    from debug import log, DBG_PARSE
 
 test_bone_names = [
     "Arm.L", "Leg.R", "Spine_01", "Hand.l", "Foot.r", "Head", "Finger01.L", "Toe01.R"
@@ -149,3 +151,18 @@ def generate_test_names_all_cases(preset):
             test_cases.append(name)
 
     return test_cases
+
+
+# def rename_bone_test(new_elements=None):
+#     selected_bones_names = random_test_names(rename_preset, 5)
+#     # DBG_PARSE and log.info(f"Selected bones: {selected_bones_names}")
+
+#     nm = NamingManager(rename_preset)
+
+#     for bone_name in selected_bones_names:
+#         DBG_PARSE and log.info(f"Parse: {bone_name}")
+#         elements = nm.search_elements(bone_name)
+#         # DBG_PARSE and log.info(f"Elements: {elements}")
+#         new_name = nm.rebuild_name(elements, new_elements)
+#         DBG_PARSE and log.info(f"New name: {new_name}")
+
