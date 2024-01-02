@@ -30,17 +30,97 @@ rename_preset = {
     "prefix": ["CTRL", "DEF", "MCH"],
     "middle": ["Root", "Arm", "Leg", "Spine", "Hand", "Foot", "Head", "Finger", "Toe", "Tail"],
     "suffix": ["Tweak", "Pole"],
-    "counter_settings": {
+    "counter": {
         "enabled": True, 
         "digits": 2
     },
-    "side_pair_settings": {
+    "side_pair": {
         "side_pair": "L|R",
         "side_separator": ".",
         "side_position": "SUFFIX"
     },
-    "common_settings": {"common_separator": "_"}
+    "common_settings": {
+        "common_separator": "_"
+        }
 }
+
+
+rename_settings = {
+    "elements": [
+        {
+            "name": "prefix",
+            "type": "TEXT",
+            "enabled": True,
+            "order": 1,
+            "items": ["CTRL", "DEF", "MCH"]
+        },
+        {
+            "name": "middle",
+            "type": "TEXT",
+            "enabled": True,
+            "order": 2,
+            "items": ["Root", "Arm", "Leg", "Spine", "Hand", "Foot", "Head", "Finger", "Toe", "Tail"]
+        },
+        {
+            "name": "suffix",
+            "type": "TEXT",
+            "enabled": True,
+            "order": 3,
+            "items": ["Tweak", "Pole"]
+        },
+        {
+            "name": None,
+            "type": "COUNTER",
+            "enabled": True,
+            "order": 4,
+            "items": None,
+            "digits": 2
+        },
+        {
+            "name": None,
+            "type": "POSITION",
+            "enabled": True,
+            "order": None,
+            "items": ["L|R", "Top|Bottom", "Front|Back"],  # XAXIS, YAXIS, ZAXIS
+            "position_order": "PREFIX",  # PREFIX or SUFFIX
+        },
+    ],
+    "separator_settings": {
+        "text_separator": "_",
+        "counter_separator": "-",
+        "position_separator": ".",
+    }
+}
+
+position_enum_items = {
+    "XAXIS": [
+        ('L|R', "L / R", "Upper case L/R", 1),
+        ('l|r', "l / r", "Lower case l/r", 2),
+        ('LEFT|RIGHT', "LEFT / RIGHT", "Full word LEFT/RIGHT", 3),
+        ('Left|Right', "Left / Right", "Full word Left/Right", 4),
+        ('left|right', "left / right", "Full word left/right", 5),
+    ],
+    "YAXIS": [
+        ('TOP|BOTTOM', "TOP / BOTTOM", "Full word TOP/BOTTOM", 1),
+        ('Top|Bottom', "Top / Bottom", "Full word Top/Bottom", 2),
+        ('top|bottom', "top / bottom", "Full word top/bottom", 3),
+    ],
+    "ZAXIS": [
+        ('FRONT|BACK', "FRONT / BACK", "Full word FRONT/BACK", 1),
+        ('Front|Back', "Front / Back", "Full word Front/Back", 2),
+        ('front|back', "front / back", "Full word front/back", 3),
+    ],
+}
+
+separator_items = [
+    ('_', "Underscore", "_"),
+    ('.', "Dot", "."),
+    ('-', "Dash", "-"),
+    (' ', "Space", " "),
+]
+    
+
+
 
 
 def random_test_names(preset, num_cases=10):
@@ -50,32 +130,32 @@ def random_test_names(preset, num_cases=10):
         name_parts = []
 
         # 接頭語
-        if preset['prefixes'] and random.choice([True, False]):
-            name_parts.append(random.choice(preset['prefixes']))
+        if preset['prefix'] and random.choice([True, False]):
+            name_parts.append(random.choice(preset['prefix']))
 
         # 中間語
-        if preset['middle_words']:
-            name_parts.append(random.choice(preset['middle_words']))
+        if preset['middle']:
+            name_parts.append(random.choice(preset['middle']))
 
         # 接尾語
-        if preset['suffixes'] and random.choice([True, False]):
-            name_parts.append(random.choice(preset['suffixes']))
+        if preset['suffix'] and random.choice([True, False]):
+            name_parts.append(random.choice(preset['suffix']))
 
         # カウンター
-        if preset['counter_settings']['enabled']:
-            counter_format = f"{{:0{preset['counter_settings']['digits']}d}}"
+        if preset['counter']['enabled']:
+            counter_format = f"{{:0{preset['counter']['digits']}d}}"
             name_parts.append(counter_format.format(random.randint(1, 10)))
 
         test_names.append(preset['common_settings']['common_separator'].join(name_parts))
 
         # 左右識別子を追加
-        if preset['side_pair_settings']['side_pair'] and random.choice([True, False]):
-            if preset['side_pair_settings']['side_position'] == 'PREFIX':
-                test_names[-1] = random.choice(preset['side_pair_settings']['side_pair']) + \
-                    preset['side_pair_settings']['side_separator'] + test_names[-1]
+        if preset['side_pair']['side_pair'] and random.choice([True, False]):
+            if preset['side_pair']['side_position'] == 'PREFIX':
+                test_names[-1] = random.choice(preset['side_pair']['side_pair']) + \
+                    preset['side_pair']['side_separator'] + test_names[-1]
             else:
-                test_names[-1] += preset['side_pair_settings']['side_separator'] + \
-                    random.choice(preset['side_pair_settings']['side_pair'])            
+                test_names[-1] += preset['side_pair']['side_separator'] + \
+                    random.choice(preset['side_pair']['side_pair'])            
 
     return test_names
 

@@ -55,10 +55,10 @@ class VisualLog:
     def header(self, msg, header=True, header_title=None):
         header_title = header_title if header_title else ADDON_ID
         header_length = max(len(msg), len(header_title))
-        header = '-' * (header_length // 2 - len(header_title) // 2) + header_title + '-' * (header_length // 2 - len(header_title) // 2)
+        _header = '-' * (header_length // 2 - len(header_title) // 2) + header_title + '-' * (header_length // 2 - len(header_title) // 2)
 
         print("")
-        self._log(CONSOLE_COLOR_HEADER, header) if header else None
+        self._log(CONSOLE_COLOR_HEADER, _header) if header else None
         self._log(CONSOLE_COLOR_HEADER, msg)
 
     def info(self, *args):
