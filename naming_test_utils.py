@@ -48,47 +48,45 @@ rename_preset = {
 rename_settings = {
     "elements": [
         {
-            "name": "prefix",
-            "type": "TEXT",
-            "enabled": True,
             "order": 1,
+            "name": "prefix",  # ユーザーが設定する名前
+            "type": "text",
+            "enabled": True,
             "items": ["CTRL", "DEF", "MCH"]
         },
         {
-            "name": "middle",
-            "type": "TEXT",
-            "enabled": True,
             "order": 2,
+            "name": "middle",
+            "type": "text",
+            "enabled": True,
             "items": ["Root", "Arm", "Leg", "Spine", "Hand", "Foot", "Head", "Finger", "Toe", "Tail"]
         },
         {
-            "name": "suffix",
-            "type": "TEXT",
-            "enabled": True,
             "order": 3,
+            "name": "suffix",
+            "type": "text",
+            "enabled": True,
             "items": ["Tweak", "Pole"]
         },
         {
-            "name": None,
-            "type": "COUNTER",
-            "enabled": True,
             "order": 4,
-            "items": None,
+            "name": None,  # ユニークなタイプなので、ユーザーが設定する名前は不要
+            "type": "counter",
+            "enabled": True,
             "digits": 2
         },
         {
+            "order": 5,
             "name": None,
-            "type": "POSITION",
+            "type": "position",
             "enabled": True,
-            "order": None,
-            "items": ["L|R", "Top|Bottom", "Front|Back"],  # XAXIS, YAXIS, ZAXIS
-            "position_order": "PREFIX",  # PREFIX or SUFFIX
+            "items": ["L|R", "Top|Bot", "Fr|Bk"],  # XAXIS, YAXIS, ZAXIS
         },
     ],
     "separator_settings": {
         "text_separator": "_",
-        "counter_separator": "-",
-        "position_separator": ".",
+        "counter_separator": "-",  # 数値は接頭語にはならない。かならず何かのTEXTの後方に位置するので、セパレーターは数値の前方に配置される
+        "position_separator": ".",  # ポジション識別子は接頭語か接尾語になる。セパレーターはposition_orderに従う
     }
 }
 
@@ -101,16 +99,20 @@ position_enum_items = {
         ('left|right', "left / right", "Full word left/right", 5),
     ],
     "YAXIS": [
-        ('TOP|BOTTOM', "TOP / BOTTOM", "Full word TOP/BOTTOM", 1),
-        ('Top|Bottom', "Top / Bottom", "Full word Top/Bottom", 2),
-        ('top|bottom', "top / bottom", "Full word top/bottom", 3),
+        ('Top|Bot', "Top / Bot", "Upper case Top/Bot", 1),  # pose.autoside_namesによってシステム的に付与される識別子。どうやら接尾語に追加される
     ],
     "ZAXIS": [
-        ('FRONT|BACK', "FRONT / BACK", "Full word FRONT/BACK", 1),
-        ('Front|Back', "Front / Back", "Full word Front/Back", 2),
-        ('front|back', "front / back", "Full word front/back", 3),
-    ],
+        ('Fr|Bk', "Fr / Bk", "Upper case Fr/Bk", 1),
+    ]
 }
+
+def get_position_items(x=0, y=0, z=0): # -> List[XAXIS, YAXIS, ZAXIS]
+    # ただのスケッチ。ユーザーの設定に基づいてアイテムを返す。実装は後で
+    items = []
+    items.append(position_enum_items["XAXIS"][x])
+    items.append(position_enum_items["YAXIS"][y])
+    items.append(position_enum_items["ZAXIS"][z])
+    return items
 
 separator_items = [
     ('_', "Underscore", "_"),
