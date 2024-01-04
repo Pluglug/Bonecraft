@@ -1,272 +1,329 @@
 from abc import ABC, abstractmethod
-import re
 import functools
+import re
 
-from debug import log, DBG_RENAME
-from naming_test_utils import (rename_preset, # test_selected_pose_bones, 
+
+try:
+    from .debug import log, DBG_RENAME
+    from .naming_test_utils import (rename_settings, # test_selected_pose_bones, 
                                random_test_names, generate_test_names, 
                                )
-
+except:
+    from debug import log, DBG_RENAME
+    from naming_test_utils import (rename_settings, # test_selected_pose_bones, 
+                               random_test_names, generate_test_names, 
+                               )
+    
 
 # regex_utils
 
 def capture_group(func):
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs):
-        group = self.element_type
+        group = self.get_identifier()
         return f'(?P<{group}>{func(self, *args, **kwargs)})'
     return wrapper
 
-def maybe_with_separator(position="prefix"):
-    """position: "prefix", "suffix", "both", "none" """
-    def _maybe_with_separator(func):
-        @functools.wraps(func)
-        def wrapper(self, *args, **kwargs):
-            sep = self.common_separator()
-            sep = f"(?:{sep})?"
-            result = func(self, *args, **kwargs)
-            if result:
-                if position == "prefix":
-                    return f'{sep}{result}'
-                elif position == "suffix":
-                    return f'{result}{sep}'
-                elif position == "both":
-                    return f'{sep}{result}{sep}'
-                else:
-                    return result
+def maybe_with_separator(func):
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        # エスケープした方が良いかも
+        sep = f"(?:{self.get_separator()})?"
+        order = self.get_order()
+        result = func(self, *args, **kwargs)
+        if result:
+            if order == 1:
+                return f'{result}{sep}'
+            # elif order > 1:
             else:
-                return result
-        return wrapper
-    return _maybe_with_separator
+                return f'{sep}{result}'
+        else:
+            return result
+    return wrapper
 
 
 class NamingElement(ABC):
     element_type = None
-    use_common_separator = True
-
-    _compiled_patterns = {}
-    _cache_invalidated = True
+    _group_counter = 0
 
     def __init__(self, settings):
-        self.settings = settings  # TODO: 設定が変更されたらパターンを再構築する
+        self.apply_settings(settings)
+        self.standby()
 
     @abstractmethod
-    def build_pattern(self):  # FIXME: buildとrebuildの機能が対応していない
+    def build_pattern(self):
+        """Each subclass should implement its own pattern building method."""
         pass
 
-    # @abstractmethod
-    # def rebuild_name(self, elements):
-    #     pass
-
-    def invalidate_cache(self):
-        self._cache_invalidated = True  # TODO: 設定側にフラグを持たせる
-
-    def change_settings(self, new_settings):  # TODO: これも設定側に持たせる?
-        self.settings = new_settings
-        self.invalidate_cache() 
-
-    # def update_cache(self):
-    #     if self._cache_invalidated:
-    #         pattern = self.build_pattern()
-    #         self._compiled_patterns[self.element_type] = re.compile(pattern)
-    #         self._cache_invalidated = False
+    def standby(self):
+        self.value = None
+        # self.start = None
+        # self.end = None
+        # self.remainder = None
 
     def search(self, name):
-        if self._cache_invalidated:
-            NamingElement.update_all_caches(self.settings)
-        regex = self._compiled_patterns.get(self.element_type)
-        match = regex.search(name)
-        if match:
-            return {
-                'value': match.group(self.element_type),
-                # 'type': element_type,
-                # 'start': match.start(element_type),
-                # 'end': match.end(element_type),
-                # 'remainder': name[:match.start(element_type)] + name[match.end(element_type):]
-            }
-        else:
-            return None
+        if self.cache_invalidated:
+            self.update_cache()
+        match = self.compiled_pattern.search(name)
+        return self.capture(match)
+    
+    def capture(self, mache):
+        if mache:
+            self.value = mache.group(self.identifier)
+            # 将来必要になるかもしれないので残しておく
+            # self.start = match.start(self.identifier)
+            # self.end = match.end(self.identifier)
+            # self.remainder = name[:match.start(self.identifier)] + name[match.end(self.identifier):]
+            return True
+        return False
+    
+    def render(self):
+        return self.get_separator(), self.value
 
-    def common_separator(self):
-        return self.settings["common_settings"]["common_separator"]
+    def get_identifier(self):
+        return self.identifier
 
-    @classmethod
-    def get_element_types(cls):
-        subclasses = cls.__subclasses__()
-        return [subclass.element_type for subclass in subclasses if subclass.element_type]
+    def get_order(self):
+        return self.order
 
-    # @classmethod
-    # def update_all_caches(cls, settings):
-    #     for element_type in cls.get_element_types():
-    #         element = globals()[f"{element_type.capitalize()}Element"](settings)
-    #         cls._compiled_patterns[element_type] = re.compile(element.build_pattern())
+    def is_enabled(self):
+        return self.enabled
+
+    def get_separator(self):
+        # return self.settings["separator_setttings"]["text_separator"]  # TODO: 各要素ごとに設定する
+        return "_"
+
+    def apply_settings(self, settings):
+        self.cache_invalidated = True
+
+        # identifierがまだない場合は生成する
+        if not hasattr(self, 'identifier'):
+            self.identifier = self.generate_identifier()  # TODO: 上位から与える nameが一意であることを保証する
         
-    #     cls._cache_invalidated = False
+        self.settings = settings
+        self.order = settings.get('order', 0)
+        self.name = settings.get('name', 'Element')
+        self.enabled = settings.get('enabled', True)
+
+    def invalidate_cache(self):
+        self.cache_invalidated = True
+
+    def update_cache(self):
+        if self.cache_invalidated:
+            self.compiled_pattern = re.compile(self.build_pattern())
+            DBG_RENAME and log.info(f'update_cache: {self.identifier}: {self.compiled_pattern}')
+            self.cache_invalidated = False
 
     @classmethod
-    def update_all_caches(cls, settings):
-        for subclass in cls.__subclasses__():
-            if subclass.element_type:
-                element = subclass(settings)
-                cls._compiled_patterns[subclass.element_type] = re.compile(element.build_pattern())
-
-        cls._cache_invalidated = False
-        DBG_RENAME and log.info("Caches: " + str(cls._compiled_patterns))
-
-class PrefixElement(NamingElement):
-    element_type = "prefix"
-
-    @maybe_with_separator(position="suffix")
-    @capture_group
-    def build_pattern(self):
-        return f"({'|'.join(self.settings[self.element_type])})"
-
-
-class MiddleElement(NamingElement):
-    element_type = "middle"
-
-    @maybe_with_separator(position="both")
-    @capture_group
-    def build_pattern(self):
-        return f"({'|'.join(self.settings[self.element_type])})"
+    def generate_identifier(cls):  # TODO: initのたびに呼ばれるので、もっと良い方法を考える 上位から与える? new_elementの渡し方が難しくなるからnameを使う。設定で一意制を保証する
+        # safe_name = re.sub(r'\W|^(?=\d)', '_', self.name).lower()  # さらに重複があった場合には、_1, _2, ... というようにする
+        cls._group_counter += 1
+        return f"{cls.element_type}_{cls._group_counter}"
     
 
-class SuffixElement(NamingElement):
-    element_type = "suffix"
+class TextElement(NamingElement):
+    element_type = "text"
 
-    @maybe_with_separator(position="prefix")
+    def apply_settings(self, settings):
+        super().apply_settings(settings)
+        self.items = settings.get('items', [])
+
+    @maybe_with_separator
     @capture_group
     def build_pattern(self):
-        return f"({'|'.join(self.settings[self.element_type])})"
-
+        return '|'.join(self.items)
+        
 
 class CounterElement(NamingElement):
     element_type = "counter"
+    
+    def apply_settings(self, settings):
+        super().apply_settings(settings)
+        self.digits = settings.get('digits', 2)
 
-    @maybe_with_separator(position="prefix")
+    @maybe_with_separator
     @capture_group
     def build_pattern(self):
-        digits = self.settings[self.element_type]["digits"]
-        return f"\d{{{digits}}}"    
+        sep = re.escape(self.get_separator())
+        return f'\\d{{{self.digits}}}(?=\D|$)'  # FIXME: bl_counterを拾ってしまう
+
+    def get_separator(self):
+        # return self.settings["separator_setttings"]["counter_separator"]
+        return "-"
+    # CounterElement に "." をセパレータとして設定しようとした場合に、
+    # BlCounterElement との衝突が起こりうることを警告するポップアップを表示
     
-    def get_value(self, elements):
-        return int(elements[self.element_type]['value']) if elements[self.element_type] else None
+    def get_value(self):
+        return int(self.value) if self.value else None
     
-    def get_string(self, value: int) -> str:
-        return f"{value:0{self.settings['counter_settings']['digits']}d}"
+    def get_string(self):
+        return f'{self.value:0{self.digits}d}' if self.value else None
+    
 
+class PositionElement(NamingElement):
+    element_type = "position"
 
-class SideElement(NamingElement):
-    # TODO: Positionに変更して、左右だけでなく、前後、上下なども扱えるようにする
-    element_type = "side"
-    # 独自のセパレーターを持つため、rebuild_nameで検知するためのフラグ
-    use_common_separator = False
-
+    def apply_settings(self, settings):
+        super().apply_settings(settings)
+        self.items = settings.get('items', [])
+    
     def build_pattern(self):
-        side_sep = re.escape(self.settings["side_pair"]["side_separator"])
-        side_pattern = self.settings["side_pair"]["side_pair"]
-        side_position = self.settings["side_pair"]["side_position"]
-        if side_position == 'PREFIX':
-            return f'(?P<{self.element_type}>{side_pattern}){side_sep}'
-        elif side_position == 'SUFFIX':
-            return f'{side_sep}(?P<{self.element_type}>{side_pattern})'
-        
+        sep = re.escape(self.get_separator())
+        pattern = '|'.join(self.items)
+
+        if self.get_order() == 1:
+            return f'(?P<{self.identifier}>{pattern}){sep}'
+        # elif self.get_order() > 1:
+        else:
+            return f'{sep}(?P<{self.identifier}>{pattern})'
+
+    def get_separator(self):
+        # return self.settings["separator_setttings"]["position_separator"]
+        return "."
+
 
 class BlCounterElement(NamingElement):
-    # Buildin Blender counter pattern like ".001"
+    """ Buildin Blender counter pattern like ".001" """
     element_type = "bl_counter"
+
+    def apply_settings(self, settings):
+        # No settings for this element.
+        self.cache_invalidated = True
+        self.settings = settings
+
+        self.identifier = 'bl_counter'
+        self.order = -1
+        self.name = 'bl_counter'
+        self.enabled = False  # 名前の再構築時に無視されるようにする?
+        self.digits = 3
 
     @capture_group
     def build_pattern(self):
-        return r"\.\d{3}"
+        # I don't know of any other pattern than this. Please let me know if you do.
+        sep = re.escape(self.get_separator())
+        return f'{sep}\\d{{{self.digits}}}$'
     
-    def get_value(self, name):
-        match = self.search(name)
+    def standby(self):
+        super().standby()
+        self.start = None
+        self.value_int = None
+
+    def capture(self, match):
         if match:
-            return int(match.group(self.element_type)[1:])  # .001 -> 001
+            self.value = match.group(self.identifier)
+            self.start = match.start(self.identifier)
+            self.value_int = int(self.value[1:])
+            return True
+        return False
 
-
-class NamingManager:
-    # TODO: 包括的な入力検証とエラー処理を実装する
-    # settings, name, elementsの型をチェックする
-    def __init__(self, settings):
-        DBG_RENAME and log.header("NamingManager init", header=False)
-        self.settings = settings
-        self.elements = self.initialize_elements()
-        DBG_RENAME and self.print_elements()
+    def get_separator(self):
+        return "."  # The blender counter is always "." .
     
-    def initialize_elements(self):
-        elements = {}
+    def get_value(self):
+        return int(self.value[1:]) if self.value else None  # .001 -> 001
+
+    def except_bl_counter(self, name):
+        """Return the name without the bl_counter and the bl_counter value."""
+        if self.search(name):
+            return name[:self.start], int(self.value[1:])
+        else:
+            return name, None
+
+
+class NamingElements:
+    def __init__(self, obj_type, settings):
+        # 将来、typeで何をビルドするか指示される。mesh, material, bone, etc...
+        self.elements = self.build_elements(settings)
+
+    def build_elements(self, settings):
+        elements = []
+        for element_settings in settings["elements"]:
+            element_type = element_settings["type"]
+            element = self.create_element(element_type, element_settings)
+            elements.append(element)
+            
+        elements.append(BlCounterElement({}))  # これはハードコードで良い
+        elements.sort(key=lambda e: e.get_order())
+        return elements
+    
+    def get_element_classes(self):
+        element_classes = {}  # 再利用する場合はキャッシュ
         subclasses = NamingElement.__subclasses__()
-        # TODO: 初期化インターフェイスを作って、それを実装したクラスだけを初期化するようにする
         for subclass in subclasses:
-            if subclass.element_type:
-                elements[subclass.element_type] = subclass(self.settings)
-        return elements
+            element_type = getattr(subclass, 'element_type', None)
+            if element_type:
+                element_classes[element_type] = subclass
+        return element_classes
 
-    def search_elements(self, name):
-        elements = {}
-        # TODO: element.search()の戻り値に対してロバストであることを確認する
-        for element_type, element in self.elements.items():
-            elements[element_type] = element.search(name)
-        return elements
+    def create_element(self, element_type, settings):
+        element_classes = self.get_element_classes()
+        element_class = element_classes.get(element_type, None)
+        if element_class:
+            return element_class(settings)
+        else:
+            raise ValueError(f"Unknown element type: {element_type}")
     
-    def update_elements(self, elements, new_elements=None):
+    def search_elements(self, name):
+        for element in self.elements:
+            element.standby()
+            element.search(name)
+    
+    def update_elements(self, new_elements=None):  # TODO: new_elementsの指定方法を再考する
         e = {}
-        elements_types = NamingElement.get_element_types()
-        for element_type in elements_types:
+        for element in self.elements:
             # 新しい要素を受け取った場合
-            if new_elements and element_type in new_elements:
-                if new_elements[element_type] != "":
-                    e[element_type] = new_elements[element_type]
+            if new_elements and element.identifier in new_elements:
+                if new_elements[element.identifier] != "":
+                    e[element.identifier] = new_elements[element.identifier]
                 else:
                     # 新しい要素が空の場合
-                    e[element_type] = None
+                    e[element.identifier] = None
             # 新しい要素がない場合
-            elif elements[element_type]:
-                e[element_type] = elements[element_type]
-        return e
-    
-    def rebuild_name(self, elements):
-        # 各要素のrebuild_nameにインデックスを渡す
-        # ちがう、elementが順番をもつべき
-
-        n = []
-        name = ""
-
-        # use_common_separator=Trueの要素を先に処理する
-        for element_type, element in self.elements.items():
-            if element.use_common_separator:
-                n.append(element.get_string(elements))
+            elif self.elements[element]:
+                e[element.identifier] = self.elements[element]
+            # 新しい要素がなく、既存の要素もない場合
+            else:
+                e[element.identifier] = None
         
-        c_sep = NamingElement.common_separator()
-        name = c_sep.join(n)
-
-        side_sep = self.settings["side_pair"]["side_separator"]
-        side_position = self.settings["side_pair"]["side_position"]
-        if elements["side"]:
-            if side_position == 'PREFIX':
-                name = f"{elements['side']}{side_sep}{name}"
-            elif side_position == 'SUFFIX':
-                name = f"{name}{side_sep}{elements['side']}"
-        
-        return name
-
-    # TODO: デバックモジュールに移動する
-    def print_elements(self):
-        for element_type, element in self.elements.items():
-            log.info(f"{element_type}: {element}")
-        log.info("")
+        for element in self.elements:
+            self.elements[element] = e[element.identifier]
     
-    def parse_test(self):
-        test_names = random_test_names(self.settings, 10)
-        for name in test_names:
-            log.info(f"Name: {name}")
-            for element_type, element in self.elements.items():
-                log.info(f"  {element_type}: {element.search(name)}")
-            log.info("")
+    def render_name(self):
+        elements_parts = [element.render() for element in self.elements \
+                          if element.is_enabled() and element.value]
+        name_parts = []
+        for sep, value in elements_parts:
+            if name_parts:
+                name_parts.append(sep)
+            name_parts.append(value)
+        return ''.join(name_parts)
+
+    def chenge_all_settings(self, new_settings):
+        for element in self.elements:
+            element.change_settings(new_settings)
+
+    def update_caches(self):
+        for element in self.elements:
+            if element.cache_invalidated:
+                element.update_cache()
+    
+    def print_elements(self, name):
+        self.search_elements(name)
+        for element in self.elements:
+            log.info(f"{element.identifier}: {element.value}")
 
 
 if __name__ == "__main__":
-    nm = NamingManager(rename_preset)
-    nm.parse_test()
+    log.header("Test")
+    es = NamingElements("オブジェクトタイプなど", rename_settings)
+    # es.print_elements("CTRL_Root-05.L.001")
+    # es.search_elements("CTRL_Root-05.L.001")
+    # name = es.render_name()
+    # log.info(name)
+    from naming_test_utils import rename_preset
+    test_names = random_test_names(rename_preset, 5)  # TODO: test_utilsを作り直す
+
+    for name in test_names:
+        es.search_elements(name)
+        log.info(f"{name} -> {es.render_name()}")
+    
