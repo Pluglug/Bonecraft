@@ -49,7 +49,7 @@ rename_settings = {
     "elements": [
         {
             "order": 1,
-            "name": "prefix",  # ユーザーが設定する名前
+            "name": "prefix",  # キャプチャ用の名前 ユーザーが設定できるが重複は許されない
             "type": "text",
             "enabled": True,
             "items": ["CTRL", "DEF", "MCH"]
@@ -70,14 +70,14 @@ rename_settings = {
         },
         {
             "order": 4,
-            "name": None,  # ユニークなタイプなので、ユーザーが設定する名前は不要
+            "name": "counter",
             "type": "counter",
             "enabled": True,
             "digits": 2
         },
         {
             "order": 5,
-            "name": None,
+            "name": "position",
             "type": "position",
             "enabled": True,
             "items": ["L|R", "Top|Bot", "Fr|Bk"],  # XAXIS, YAXIS, ZAXIS
