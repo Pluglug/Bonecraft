@@ -20,7 +20,7 @@ except:
 def capture_group(func):
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs):
-        group = self.get_identifier()
+        group = self.name
         return f'(?P<{group}>{func(self, *args, **kwargs)})'
     return wrapper
 
@@ -49,6 +49,7 @@ class NamingElement(ABC):
     def __init__(self, settings):
         self.apply_settings(settings)
         self.standby()
+        DBG_RENAME and log.info(f'init: {self.name}')
 
     @abstractmethod
     def build_pattern(self):
@@ -61,15 +62,15 @@ class NamingElement(ABC):
         # self.end = None
         # self.remainder = None
 
-    def search(self, name):
+    def search(self, target_string):
         if self.cache_invalidated:
             self.update_cache()
-        match = self.compiled_pattern.search(name)
+        match = self.compiled_pattern.search(target_string)
         return self.capture(match)
     
     def capture(self, mache):
         if mache:
-            self.value = mache.group(self.identifier)
+            self.value = mache.group(self.name)
             # 将来必要になるかもしれないので残しておく
             # self.start = match.start(self.identifier)
             # self.end = match.end(self.identifier)
@@ -90,20 +91,19 @@ class NamingElement(ABC):
         return self.enabled
 
     def get_separator(self):
-        # return self.settings["separator_setttings"]["text_separator"]  # TODO: 各要素ごとに設定する
-        return "_"
+        return self.separator
 
     def apply_settings(self, settings):
         self.cache_invalidated = True
 
-        # identifierがまだない場合は生成する
         if not hasattr(self, 'identifier'):
-            self.identifier = self.generate_identifier()  # TODO: 上位から与える nameが一意であることを保証する
+            self.identifier = self.generate_identifier()  # TODO: 削除
         
         self.settings = settings
         self.order = settings.get('order', 0)
-        self.name = settings.get('name', 'Element')
+        self.name = settings.get('name', self.identifier)
         self.enabled = settings.get('enabled', True)
+        self.separator = settings.get('separator', "_")
 
     def invalidate_cache(self):
         self.cache_invalidated = True
@@ -111,7 +111,7 @@ class NamingElement(ABC):
     def update_cache(self):
         if self.cache_invalidated:
             self.compiled_pattern = re.compile(self.build_pattern())
-            DBG_RENAME and log.info(f'update_cache: {self.identifier}: {self.compiled_pattern}')
+            DBG_RENAME and log.info(f'  update_cache: {self.identifier}: {self.compiled_pattern}')
             self.cache_invalidated = False
 
     @classmethod
@@ -172,14 +172,16 @@ class PositionElement(NamingElement):
         pattern = '|'.join(self.items)
 
         if self.get_order() == 1:
-            return f'(?P<{self.identifier}>{pattern}){sep}'
+            return f'(?P<{self.name}>{pattern}){sep}'
         # elif self.get_order() > 1:
         else:
-            return f'{sep}(?P<{self.identifier}>{pattern})'
+            return f'{sep}(?P<{self.name}>{pattern})'
 
     def get_separator(self):
         # return self.settings["separator_setttings"]["position_separator"]
         return "."
+    
+    # 設定を変えたときに、変換できると便利 (01 -> 00001)
 
 
 class BlCounterElement(NamingElement):
@@ -192,7 +194,7 @@ class BlCounterElement(NamingElement):
         self.settings = settings
 
         self.identifier = 'bl_counter'
-        self.order = -1
+        self.order = 100  # ( ´∀｀ )b
         self.name = 'bl_counter'
         self.enabled = False  # 名前の再構築時に無視されるようにする?
         self.digits = 3
@@ -210,8 +212,8 @@ class BlCounterElement(NamingElement):
 
     def capture(self, match):
         if match:
-            self.value = match.group(self.identifier)
-            self.start = match.start(self.identifier)
+            self.value = match.group(self.name)
+            self.start = match.start(self.name)
             self.value_int = int(self.value[1:])
             return True
         return False
@@ -230,25 +232,29 @@ class BlCounterElement(NamingElement):
             return name, None
 
 
-class NamingElements:
+class NamingElements:  #(ABC)
+    # elements_type = None
     def __init__(self, obj_type, settings):
         # 将来、typeで何をビルドするか指示される。mesh, material, bone, etc...
-        self.elements = self.build_elements(settings)
+        self.elements = self.build_elements(obj_type, settings)  # TODO: obj_typeの扱いを考える
 
-    def build_elements(self, settings):
+    def build_elements(self, obj_type, settings):
         elements = []
-        for element_settings in settings["elements"]:
+        elements_type = f"{obj_type}_elements"
+        for element_settings in settings[elements_type]:
             element_type = element_settings["type"]
             element = self.create_element(element_type, element_settings)
             elements.append(element)
             
         elements.append(BlCounterElement({}))  # これはハードコードで良い
         elements.sort(key=lambda e: e.get_order())
+        DBG_RENAME and log.info( \
+            f'build_elements: {elements_type}:\n' + '\n'.join([f'  {e.identifier}: {e.name}' for e in elements]))
         return elements
     
     def get_element_classes(self):
         element_classes = {}  # 再利用する場合はキャッシュ
-        subclasses = NamingElement.__subclasses__()
+        subclasses = NamingElement.__subclasses__()  # TODO: obj_typeに適したサブクラスを取得する必要がある
         for subclass in subclasses:
             element_type = getattr(subclass, 'element_type', None)
             if element_type:
@@ -264,30 +270,19 @@ class NamingElements:
             raise ValueError(f"Unknown element type: {element_type}")
     
     def search_elements(self, name):
+        DBG_RENAME and log.header(f'search_elements: {name}', False)
         for element in self.elements:
             element.standby()
             element.search(name)
     
-    def update_elements(self, new_elements=None):  # TODO: new_elementsの指定方法を再考する
-        e = {}
+    def update_elements(self, new_elements=None):
+        if not new_elements and not isinstance(new_elements, dict):
+            return
+
         for element in self.elements:
-            # 新しい要素を受け取った場合
-            if new_elements and element.identifier in new_elements:
-                if new_elements[element.identifier] != "":
-                    e[element.identifier] = new_elements[element.identifier]
-                else:
-                    # 新しい要素が空の場合
-                    e[element.identifier] = None
-            # 新しい要素がない場合
-            elif self.elements[element]:
-                e[element.identifier] = self.elements[element]
-            # 新しい要素がなく、既存の要素もない場合
-            else:
-                e[element.identifier] = None
-        
-        for element in self.elements:
-            self.elements[element] = e[element.identifier]
-    
+            if element.name in new_elements:
+                element.value = new_elements[element.name] or None
+
     def render_name(self):
         elements_parts = [element.render() for element in self.elements \
                           if element.is_enabled() and element.value]
@@ -296,7 +291,9 @@ class NamingElements:
             if name_parts:
                 name_parts.append(sep)
             name_parts.append(value)
-        return ''.join(name_parts)
+        name = ''.join(name_parts)
+        DBG_RENAME and log.info(f'render_name: {name}')
+        return name
 
     def chenge_all_settings(self, new_settings):
         for element in self.elements:
@@ -314,16 +311,20 @@ class NamingElements:
 
 
 if __name__ == "__main__":
-    log.header("Test")
-    es = NamingElements("オブジェクトタイプなど", rename_settings)
+    DBG_RENAME = True
+    log.header("Naming Base Test", False)
+    es = NamingElements("bone", rename_settings)
     # es.print_elements("CTRL_Root-05.L.001")
     # es.search_elements("CTRL_Root-05.L.001")
     # name = es.render_name()
     # log.info(name)
     from naming_test_utils import rename_preset
-    test_names = random_test_names(rename_preset, 5)  # TODO: test_utilsを作り直す
+    test_names = random_test_names(rename_preset, 2)  # TODO: test_utilsを作り直す
+    new_elements = {"prefix": "CTRL", "suffix": "", "position": None}
+
+    test_names += ["CTRL_Root-05.L.001"]
 
     for name in test_names:
         es.search_elements(name)
-        log.info(f"{name} -> {es.render_name()}")
-    
+        es.update_elements(new_elements)
+        _ = es.render_name()

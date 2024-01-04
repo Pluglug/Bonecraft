@@ -46,34 +46,38 @@ rename_preset = {
 
 
 rename_settings = {
-    "elements": [
+    "bone_elements": [
         {
             "order": 1,
             "name": "prefix",  # キャプチャ用の名前 ユーザーが設定できるが重複は許されない
             "type": "text",
             "enabled": True,
-            "items": ["CTRL", "DEF", "MCH"]
+            "items": ["CTRL", "DEF", "MCH"],
+            "separator": "_",
         },
         {
             "order": 2,
             "name": "middle",
             "type": "text",
             "enabled": True,
-            "items": ["Root", "Arm", "Leg", "Spine", "Hand", "Foot", "Head", "Finger", "Toe", "Tail"]
+            "items": ["Root", "Arm", "Leg", "Spine", "Hand", "Foot", "Head", "Finger", "Toe", "Tail"],
+            "separator": "_",
         },
         {
             "order": 3,
             "name": "suffix",
             "type": "text",
             "enabled": True,
-            "items": ["Tweak", "Pole"]
+            "items": ["Tweak", "Pole"],
+            "separator": "_",
         },
         {
             "order": 4,
             "name": "counter",
             "type": "counter",
             "enabled": True,
-            "digits": 2
+            "digits": 2,
+            "separator": "-",
         },
         {
             "order": 5,
@@ -81,13 +85,9 @@ rename_settings = {
             "type": "position",
             "enabled": True,
             "items": ["L|R", "Top|Bot", "Fr|Bk"],  # XAXIS, YAXIS, ZAXIS
+            "separator": ".",
         },
     ],
-    "separator_settings": {
-        "text_separator": "_",
-        "counter_separator": "-",  # 数値は接頭語にはならない。かならず何かのTEXTの後方に位置するので、セパレーターは数値の前方に配置される
-        "position_separator": ".",  # ポジション識別子は接頭語か接尾語になる。セパレーターはposition_orderに従う
-    }
 }
 
 position_enum_items = {
