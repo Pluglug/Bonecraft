@@ -73,8 +73,8 @@ rename_settings = {
         },
         {
             "order": 4,
-            "name": "counter",
-            "type": "counter",
+            "name": "ez_counter",
+            "type": "ez_counter",
             "enabled": True,
             "digits": 2,
             "separator": "-",

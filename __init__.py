@@ -17,7 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
-from . bone_naming import *
+# from . bone_naming import *
 from . debug import log, DBG_INIT
 from . import addon
 
@@ -40,12 +40,12 @@ addon.BL_VERSION = bl_info["blender"]
 
 
 from . operators import edit_ops
-from . import naming
+from . import naming_base
 from . import naming_ui
 
 classes = []
 classes.extend(edit_ops.operator_classes)
-classes.extend(naming.operator_classes)
+classes.extend(naming_base.operator_classes)
 classes.extend(naming_ui.panel_classes)
 
 

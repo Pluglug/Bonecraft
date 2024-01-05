@@ -51,7 +51,7 @@ class NamingElement(ABC):
         self.standby()
         DBG_RENAME and log.info(f'init: {self.name}')
 
-    @abstractmethod
+    @abstractmethod  # 抽象メソッドとインスタンスメソッドの混在はよろしくない?
     def build_pattern(self):
         """Each subclass should implement its own pattern building method."""
         pass
@@ -120,6 +120,12 @@ class NamingElement(ABC):
         cls._group_counter += 1
         return f"{cls.element_type}_{cls._group_counter}"
     
+    # new_elementsを作るための便利メソッドが欲しい
+
+
+class UnknownElement(NamingElement):
+    pass
+
 
 class TextElement(NamingElement):
     element_type = "text"
@@ -134,31 +140,59 @@ class TextElement(NamingElement):
         return '|'.join(self.items)
         
 
-class CounterElement(NamingElement):
-    element_type = "counter"
+class EzCounterElement(NamingElement):
+    element_type = "ez_counter"
     
     def apply_settings(self, settings):
         super().apply_settings(settings)
         self.digits = settings.get('digits', 2)
+        # セパレーターとセットで識別する場合、カウンターが名前の先頭にあるとセパレーターが付与されない。
+        # できれば、名前の先頭にあってほしくない。なにか制約を考える必要がある。
 
-    @maybe_with_separator
+    @maybe_with_separator  # self.separator、つまりez_counterのセパレーターを使用
     @capture_group
     def build_pattern(self):
-        sep = re.escape(self.get_separator())
-        return f'\\d{{{self.digits}}}(?=\D|$)'  # FIXME: bl_counterを拾ってしまう
+        # sep = re.escape(self.get_separator())
+        # return f'{sep}\\d{{{self.digits}}}'  # このようにセパレーターとセットで識別することで、bl_counterとの衝突をある程度避けることができる
+        return f'\\d{{{self.digits}}}' # (?=\D|$)'あえて"00"を取らせちゃう なんとかなれー 3桁以上だとダメ  # FIXME: bl_counterを拾ってしまう
+    
+    def standby(self):
+        super().standby()
+        self.value_int = None
+
+    def capture(self, match):
+        if match:
+            self.value = match.group(self.name)
+            self.value_int = int(self.value)
+            return True
+        return False
+    
+    # 指定された数と足し算
+    def add(self, num):
+        self.value_int += num
+        self.value = f'{self.value_int:0{self.digits}d}'
+        return self.value
+
+    def increment(self):
+        return self.add(1)
 
     def get_separator(self):
-        # return self.settings["separator_setttings"]["counter_separator"]
-        return "-"
+        return self.separator  # + "|\\."
     # CounterElement に "." をセパレータとして設定しようとした場合に、
     # BlCounterElement との衝突が起こりうることを警告するポップアップを表示
+    # そもそもCounterとBlCounterを区別しないようにする? 
+    # しかし2箇所にカウンターが存在する可能性がある("name-05.001") 
+    # 足し算すればいいんだ!("name-06")
+    # 設定を変えたときに、変換できると便利 (01 -> 00001)
+    # "001"、"-01"、".A"などの開始設定 なにかExcelのオートフィルみたいなことができるモジュールはないか?
+    #  "Bone-A-01", "Bone-B-02" など  マルチカウンターサポート これはcounterを高度に抽象化すればできるかもしれない
+
+    # def get_string(self):
+    #     return f'{self.value:0{self.digits}d}' if self.value else None
     
-    def get_value(self):
-        return int(self.value) if self.value else None
-    
-    def get_string(self):
-        return f'{self.value:0{self.digits}d}' if self.value else None
-    
+    # def replace_bl_counter(self, name, value):
+    #     if BlCounterElement.search(name):
+    #         return name[:BlCounterElement.start] + f'.{value:0{self.digits}d}'
 
 class PositionElement(NamingElement):
     element_type = "position"
@@ -178,10 +212,7 @@ class PositionElement(NamingElement):
             return f'{sep}(?P<{self.name}>{pattern})'
 
     def get_separator(self):
-        # return self.settings["separator_setttings"]["position_separator"]
-        return "."
-    
-    # 設定を変えたときに、変換できると便利 (01 -> 00001)
+        return self.separator
 
 
 class BlCounterElement(NamingElement):
@@ -196,8 +227,9 @@ class BlCounterElement(NamingElement):
         self.identifier = 'bl_counter'
         self.order = 100  # ( ´∀｀ )b
         self.name = 'bl_counter'
-        self.enabled = False  # 名前の再構築時に無視されるようにする?
+        self.enabled = False  # デフォルトで名前の再構築時に無視されるようにする?
         self.digits = 3
+        self.separator = "."  # The blender counter is always "." .
 
     @capture_group
     def build_pattern(self):
@@ -219,7 +251,7 @@ class BlCounterElement(NamingElement):
         return False
 
     def get_separator(self):
-        return "."  # The blender counter is always "." .
+        return self.separator
     
     def get_value(self):
         return int(self.value[1:]) if self.value else None  # .001 -> 001
@@ -295,6 +327,27 @@ class NamingElements:  #(ABC)
         DBG_RENAME and log.info(f'render_name: {name}')
         return name
 
+    def counter_operation(self, bone):
+        bl_counter = next((e for e in self.elements if isinstance(e, BlCounterElement)), None)
+        ez_counter = next((e for e in self.elements if isinstance(e, EzCounterElement)), None)
+
+        if bl_counter and ez_counter:
+            ez_counter.add(bl_counter.get_value())
+        elif ez_counter:
+            ez_counter.increment()
+        else:
+            raise ValueError("EzCounterElement is missing in elements")
+
+        proposed_name = self.render_name()
+        while self.check_duplicate_names(bone, proposed_name):
+            ez_counter.increment()
+            proposed_name = self.render_name()
+        return proposed_name
+
+    def check_duplicate_names(self, bone, name):
+        # ここでハッシュセットを使用して名前の重複をチェック
+        return name in (b.name for b in bone.id_data.pose.bones)
+
     def chenge_all_settings(self, new_settings):
         for element in self.elements:
             element.change_settings(new_settings)
@@ -308,6 +361,80 @@ class NamingElements:  #(ABC)
         self.search_elements(name)
         for element in self.elements:
             log.info(f"{element.identifier}: {element.value}")
+
+    # # -----counter operations-----
+    # @staticmethod
+    # def check_duplicate_names(bone):
+    #     return bone.name in (b.name for b in bone.id_data.pose.bones)
+
+    # def replace_bl_counter(self, elements):
+    #     if 'bl_counter' in elements:
+    #         num = self.get_bl_counter_value(elements)
+    #         elements['counter'] = {'value': self.get_counter_string(num)}
+    #         del elements['bl_counter']
+    #     return elements
+
+    # # 名前の重複を確認しながら、カウンターをインクリメントしていく
+    # def increment_counter(self, bone, elements):  # boneもしくはarmature 明示的なのは...
+    #     # ここでboneが絶対に必要になる interfaceでboneもelementsも扱えるようにしたい
+    #     counter_value = self.get_counter_value(elements)
+    #     while self.check_duplicate_names(bone):
+    #         counter_value += 1
+    #         elements['counter']['value'] = self.get_counter_string(counter_value)
+    #     return elements
+    
+
+# class Namespace(ABC):
+#     pass
+
+
+# class PoseBones(Namespace):
+#     def __init__(self):
+#         self.namespaces = []
+
+#     def register_object(self, bone):
+#         # オブジェクトを登録し、名前空間を初期化または更新
+#         armature = bone.id_data
+#         for pose_bone in armature.pose.bones:
+#             self.namespaces.append(pose_bone.name)
+
+#     def check_duplicate(self, proposed_name):
+#         # 提案された名前が既に存在するかチェック
+#         return proposed_name in self.namespaces
+
+#     def increment_counter(self, elements):
+#         # 必要に応じてカウンターをインクリメントし、新しい名前を生成
+#         counter_element = [e for e in elements if isinstance(e, EzCounterElement)]
+#         while self.check_duplicate(proposed_name):
+#             counter_element.increment()
+#             proposed_name = self.render_name()
+#         return elements
+
+
+import bpy
+class EZRENAMER_OT_RenameTest(bpy.types.Operator):
+    bl_idname = "ezrenamer.rename_test"
+    bl_label = "Rename Test"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    new_elements: bpy.props.StringProperty(name="New Elements", default="")
+
+    def execute(self, context):
+        # new_elements = {"prefix": "CTRL", "suffix": "", "position": None}
+        _new_elements = eval(self.new_elements)
+        selected_pose_bones = context.selected_pose_bones
+        es = NamingElements("bone", rename_settings)
+        for bone in selected_pose_bones:
+            es.search_elements(bone.name)
+            es.update_elements(_new_elements)
+            new_name = es.counter_operation(bone)
+            bone.name = new_name
+        return {'FINISHED'}
+
+
+operator_classes = [
+    EZRENAMER_OT_RenameTest,
+]
 
 
 if __name__ == "__main__":
