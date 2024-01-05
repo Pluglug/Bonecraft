@@ -5,11 +5,13 @@ import re
 
 try:
     from .debug import log, DBG_RENAME
+    from .operators.mixin_utils import ArmModeMixin
     from .naming_test_utils import (rename_settings, # test_selected_pose_bones, 
                                random_test_names, generate_test_names, 
                                )
 except:
     from debug import log, DBG_RENAME
+    from operators.mixin_utils import ArmModeMixin
     from naming_test_utils import (rename_settings, # test_selected_pose_bones, 
                                random_test_names, generate_test_names, 
                                )
@@ -57,7 +59,7 @@ class NamingElement(ABC):
         pass
 
     def standby(self):
-        self.value = None
+        self.value = None  # name_elementとかにする
         # self.start = None
         # self.end = None
         # self.remainder = None
@@ -171,8 +173,9 @@ class EzCounterElement(NamingElement):
     
     # 指定された数と足し算
     def add(self, num):
-        self.value_int += num
-        self.value = f'{self.value_int:0{self.digits}d}'
+        if num and isinstance(num, int):
+            self.value_int += num
+            self.value = f'{self.value_int:0{self.digits}d}'
         return self.value
 
     def increment(self):
@@ -180,6 +183,11 @@ class EzCounterElement(NamingElement):
 
     def get_separator(self):
         return self.separator  # + "|\\."
+    
+    def set_str_value(self, int_value):
+        self.value = f'{int_value:0{self.digits}d}'
+        self.value_int = int_value
+
     # CounterElement に "." をセパレータとして設定しようとした場合に、
     # BlCounterElement との衝突が起こりうることを警告するポップアップを表示
     # そもそもCounterとBlCounterを区別しないようにする? 
@@ -258,12 +266,39 @@ class BlCounterElement(NamingElement):
     def get_value(self):
         return int(self.value[1:]) if self.value else None  # .001 -> 001
 
-    def except_bl_counter(self, name):
-        """Return the name without the bl_counter and the bl_counter value."""
-        if self.search(name):
-            return name[:self.start], int(self.value[1:])
-        else:
-            return name, None
+    # def except_bl_counter(self, name):
+    #     """Return the name without the bl_counter and the bl_counter value."""
+    #     if self.search(name):
+    #         return name[:self.start], int(self.value[1:])
+    #     else:
+    #         return name, None
+
+
+class Namespace:
+    def __init__(self):
+        self.names = set()  # ポーズボーンの名前を保持するハッシュセット
+
+    def update_name(self, old_name, new_name):
+        """名前が変更された場合にハッシュセットを更新します"""
+        if old_name in self.names:
+            self.names.remove(old_name)
+        self.names.add(new_name)
+
+    def add_name(self, name):
+        """新しい名前をハッシュセットに追加します"""
+        self.names.add(name)
+
+    def remove_name(self, name):
+        """名前をハッシュセットから削除します"""
+        self.names.remove(name)
+
+    def find_unused_min_counter(self, base_name, max_counter=9999):
+        """使用されていない最小のカウンター値を見つけます"""
+        for i in range(1, max_counter + 1):
+            proposed_name = f"{base_name}{i:02d}"  # カウンターを2桁と仮定
+            if proposed_name not in self.names:
+                return i
+        return None  # 使用可能なカウンターが見つからない場合
 
 
 class NamingElements:  #(ABC)
@@ -271,6 +306,7 @@ class NamingElements:  #(ABC)
     def __init__(self, obj_type, settings):
         # 将来、typeで何をビルドするか指示される。mesh, material, bone, etc...
         self.elements = self.build_elements(obj_type, settings)  # TODO: obj_typeの扱いを考える
+        self.namespace = Namespace() 
 
     def build_elements(self, obj_type, settings):
         elements = []
@@ -333,22 +369,56 @@ class NamingElements:  #(ABC)
         bl_counter = next((e for e in self.elements if isinstance(e, BlCounterElement)), None)
         ez_counter = next((e for e in self.elements if isinstance(e, EzCounterElement)), None)
 
-        if bl_counter and ez_counter:
-            ez_counter.add(bl_counter.get_value())
-        elif ez_counter:
-            ez_counter.increment()
-        else:
-            raise ValueError("EzCounterElement is missing in elements")
+        if bl_counter.value:  # bl_counterが存在する場合は、適切にez_counterを生成してbl_counterを削除する必要がある
+            if ez_counter.value:   # すでにez_counterが存在する場合は、ez_counterにbl_counterの値を加算してbl_counterを削除 
+                DBG_RENAME and log.info(f'  existing bl_counter and ez_counter: {bl_counter.value}, {ez_counter.value}')
+                ez_counter.add(bl_counter.get_value())  # もしかしたら不要 1からカウンターを探すプロセスに統一する?どちらが効率的か?
+                bl_counter.value = None
+            else:  # ez_counterが存在しない場合は、ez_counterにbl_counterの値を渡してbl_counterを削除
+                DBG_RENAME and log.info(f'  existing bl_counter: {bl_counter.value}')
+                ez_counter.set_str_value(bl_counter.get_value())
+                bl_counter.value = None
+            proposed_name = self.render_name()  # この時点で、名前は完成しているはず
+            if self.check_duplicate_names(bone, proposed_name): # すでに同じ名前が存在する場合は、適切なカウンターの値を探す 
+                ez_counter.set_str_value(1)  # 自分のカウンターより小さい値が使用可能であれば使いたい。非効率かもしれない
+                proposed_name = self.render_name()  # 一度カウンターを1に戻してから、適切なカウンターの値を探す
+                while self.check_duplicate_names(bone, proposed_name):
+                    ez_counter.increment()
+                    proposed_name = self.render_name()
+                    DBG_RENAME and log.warning(f'  counter incremented: {ez_counter.value}')
+            return proposed_name
+        
+        elif ez_counter.value:  # ez_counterのみの存在
+            DBG_RENAME and log.info(f'  existing ez_counter: {ez_counter.value}')
+            proposed_name = self.render_name()  # この時点で、名前は完成しているはず
+            if self.check_duplicate_names(bone, proposed_name):  # すでに同じ名前が存在する場合は、適切なカウンターの値を探す
+                ez_counter.set_str_value(1)
+                proposed_name = self.render_name()  # 一度カウンターを1に戻してから、適切なカウンターの値を探す
+                while self.check_duplicate_names(bone, proposed_name):
+                    ez_counter.increment()
+                    proposed_name = self.render_name()
+                    DBG_RENAME and log.warning(f'  counter incremented: {ez_counter.value}')
+            return proposed_name
 
-        proposed_name = self.render_name()
-        while self.check_duplicate_names(bone, proposed_name):
-            ez_counter.increment()
-            proposed_name = self.render_name()
-        return proposed_name
+        else:  # カウンターの不在
+            DBG_RENAME and log.info(f'  no existing counter')
+            proposed_name = self.render_name()  # カウンターの不在の場合は、名前は完成しているはず
+            if self.check_duplicate_names(bone, proposed_name):  # すでに同じ名前が存在する場合は、適切なカウンターの値を探す 
+                ez_counter.set_str_value(1)
+                proposed_name = self.render_name()  # 一度カウンターを1に戻してから、適切なカウンターの値を探す
+                while self.check_duplicate_names(bone, proposed_name):
+                    ez_counter.increment()
+                    proposed_name = self.render_name()
+                    DBG_RENAME and log.warning(f'  counter incremented: {ez_counter.value}')
+            return proposed_name
+
 
     def check_duplicate_names(self, bone, name):
-        # ここでハッシュセットを使用して名前の重複をチェック
-        return name in (b.name for b in bone.id_data.pose.bones)
+        # TODO: ここでハッシュセットを使用して名前の重複をチェック
+        if name == bone.name:
+            return False  # 現在の名前と同じ場合は重複していないとみなす    
+        
+        return name in (b.name for b in bone.id_data.pose.bones) 
 
     def chenge_all_settings(self, new_settings):
         for element in self.elements:
@@ -414,7 +484,7 @@ class NamingElements:  #(ABC)
 
 
 import bpy
-class EZRENAMER_OT_RenameTest(bpy.types.Operator):
+class EZRENAMER_OT_RenameTest(bpy.types.Operator, ArmModeMixin):
     bl_idname = "ezrenamer.rename_test"
     bl_label = "Rename Test"
     bl_options = {'REGISTER', 'UNDO'}
@@ -422,15 +492,20 @@ class EZRENAMER_OT_RenameTest(bpy.types.Operator):
     new_elements: bpy.props.StringProperty(name="New Elements", default="")
 
     def execute(self, context):
-        # new_elements = {"prefix": "CTRL", "suffix": "", "position": None}
-        _new_elements = eval(self.new_elements)
-        selected_pose_bones = context.selected_pose_bones
-        es = NamingElements("bone", rename_settings)
-        for bone in selected_pose_bones:
-            es.search_elements(bone.name)
-            es.update_elements(_new_elements)
-            new_name = es.counter_operation(bone)
-            bone.name = new_name
+        with self.mode_context(context, 'POSE'):
+            new_elements = {"prefix": "CTRL", "suffix": "", "position": None}
+            _new_elements = eval(self.new_elements) if self.new_elements else new_elements
+            selected_pose_bones = context.selected_pose_bones
+            es = NamingElements("bone", rename_settings)
+            for bone in selected_pose_bones:
+                DBG_RENAME and log.header(f'Original name: {bone.name}')
+                es.search_elements(bone.name)
+                DBG_RENAME and log.info(f'Elements: {[(e.name, e.value) for e in es.elements]}')
+                es.update_elements(_new_elements)
+                DBG_RENAME and log.info(f'Update elements: {[(e.name, e.value) for e in es.elements]}')
+                new_name = es.counter_operation(bone)
+                bone.name = new_name
+                DBG_RENAME and log.warning(f'New name: {bone.name}')
         return {'FINISHED'}
 
 

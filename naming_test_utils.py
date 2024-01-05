@@ -60,7 +60,7 @@ rename_settings = {
             "name": "middle",
             "type": "text",
             "enabled": True,
-            "items": ["Root", "Arm", "Leg", "Spine", "Hand", "Foot", "Head", "Finger", "Toe", "Tail"],
+            "items": ["Bone", "Root", "Arm", "Leg", "Spine", "Hand", "Foot", "Head", "Finger", "Toe", "Tail"],
             "separator": "_",
         },
         {
@@ -82,9 +82,10 @@ rename_settings = {
         {
             "order": 5,
             "name": "position",
-            "type": "position",
+            "type": "position",  # positionである必要がなくなった  
+            # "type": "text",　# 否定 セパレーター込みで一つの要素として扱う必要がある 正規表現を見直す必要がある searchロジックでのセパレーターの扱いを見直す
             "enabled": True,
-            "items": ["L|R", "Top|Bot", "Fr|Bk"],  # XAXIS, YAXIS, ZAXIS
+            "items": ["L", "R", "Top", "Bot", "Fr", "Bk"],  # XAXIS, YAXIS, ZAXIS
             "separator": ".",
         },
     ],
