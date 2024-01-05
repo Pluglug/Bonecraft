@@ -68,13 +68,15 @@ class NamingElement(ABC):
         match = self.compiled_pattern.search(target_string)
         return self.capture(match)
     
-    def capture(self, mache):
-        if mache:
-            self.value = mache.group(self.name)
+    def capture(self, match):
+        if match:
+            self.value = match.group(self.name)
             # 将来必要になるかもしれないので残しておく
             # self.start = match.start(self.identifier)
             # self.end = match.end(self.identifier)
             # self.remainder = name[:match.start(self.identifier)] + name[match.end(self.identifier):]
+            # self.forward = name[match.end(self.identifier):]
+            # self.backward = name[:match.start(self.identifier)]
             return True
         return False
     
