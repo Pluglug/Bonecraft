@@ -59,7 +59,7 @@ class NamingElement(ABC):
         pass
 
     def standby(self):
-        self.value = None  # name_elementとかにする
+        self.value: str = None # TODO: name_elementとかにする
         # self.start = None
         # self.end = None
         # self.remainder = None
@@ -163,15 +163,21 @@ class EzCounterElement(NamingElement):
     def standby(self):
         super().standby()
         self.value_int = None
+        self.start = None
+        self.end = None
+        self.forward = None
+        self.backward = None
 
     def capture(self, match):
         if match:
-            self.value = match.group(self.name)
             self.value_int = int(self.value)
+            self.start = match.start(self.name)
+            self.end = match.end(self.name) 
+            self.forward = match.string[match.end(self.name):]
+            self.backward = match.string[:match.start(self.name)]
             return True
         return False
     
-    # 指定された数と足し算
     def add(self, num):
         if num and isinstance(num, int):
             self.value_int += num
@@ -184,9 +190,19 @@ class EzCounterElement(NamingElement):
     def get_separator(self):
         return self.separator  # + "|\\."
     
-    def set_str_value(self, int_value):
+    def set_value(self, int_value):
         self.value = f'{int_value:0{self.digits}d}'
         self.value_int = int_value
+
+    def find_unused_min_counter(self, name, name_set, max_counter=9999):
+        self.search(name)  # forward, backwardを更新
+        for i in range(1, max_counter + 1):
+            proposed_name = f"{self.forward}{i:0{self.digits}d}{self.backward}"  # 前後は最新?
+            if proposed_name not in name_set:
+                self.set_value(i)
+                DBG_RENAME and log.info(f'  find_unused_min_counter: {self.value}')
+                return True
+        return False
 
     # CounterElement に "." をセパレータとして設定しようとした場合に、
     # BlCounterElement との衝突が起こりうることを警告するポップアップを表示
@@ -279,26 +295,27 @@ class Namespace:
         self.names = set()  # ポーズボーンの名前を保持するハッシュセット
 
     def update_name(self, old_name, new_name):
-        """名前が変更された場合にハッシュセットを更新します"""
         if old_name in self.names:
             self.names.remove(old_name)
         self.names.add(new_name)
 
     def add_name(self, name):
-        """新しい名前をハッシュセットに追加します"""
         self.names.add(name)
 
     def remove_name(self, name):
-        """名前をハッシュセットから削除します"""
         self.names.remove(name)
 
-    def find_unused_min_counter(self, base_name, max_counter=9999):
-        """使用されていない最小のカウンター値を見つけます"""
-        for i in range(1, max_counter + 1):
-            proposed_name = f"{base_name}{i:02d}"  # カウンターを2桁と仮定
-            if proposed_name not in self.names:
-                return i
-        return None  # 使用可能なカウンターが見つからない場合
+
+class Namespaces:
+    def __init__(self):
+        self.namespaces = {}
+
+    def register_object(self, obj):
+        # オブジェクトを登録し、名前空間を初期化または更新
+        if obj.name not in self.namespaces:
+            self.namespaces[obj.name] = Namespace()
+        for bone in obj.pose.bones:
+            self.namespaces[obj.name].add_name(bone.name)  # TODO: 次はここから作業する
 
 
 class NamingElements:  #(ABC)
@@ -345,7 +362,7 @@ class NamingElements:  #(ABC)
             element.standby()
             element.search(name)
     
-    def update_elements(self, new_elements=None):
+    def update_elements(self, new_elements: dict=None):
         if not new_elements and not isinstance(new_elements, dict):
             return
 
@@ -376,49 +393,49 @@ class NamingElements:  #(ABC)
                 bl_counter.value = None
             else:  # ez_counterが存在しない場合は、ez_counterにbl_counterの値を渡してbl_counterを削除
                 DBG_RENAME and log.info(f'  existing bl_counter: {bl_counter.value}')
-                ez_counter.set_str_value(bl_counter.get_value())
+                ez_counter.set_value(bl_counter.get_value())
                 bl_counter.value = None
             proposed_name = self.render_name()  # この時点で、名前は完成しているはず
-            if self.check_duplicate_names(bone, proposed_name): # すでに同じ名前が存在する場合は、適切なカウンターの値を探す 
-                ez_counter.set_str_value(1)  # 自分のカウンターより小さい値が使用可能であれば使いたい。非効率かもしれない
-                proposed_name = self.render_name()  # 一度カウンターを1に戻してから、適切なカウンターの値を探す
-                while self.check_duplicate_names(bone, proposed_name):
-                    ez_counter.increment()
-                    proposed_name = self.render_name()
-                    DBG_RENAME and log.warning(f'  counter incremented: {ez_counter.value}')
-            return proposed_name
+            if self.check_duplicate_names(proposed_name):
+                if ez_counter.find_unused_min_counter(proposed_name, self.namespace.names):
+                    return self.render_name()
+                else:
+                    log.error(f'  counter operation failed: {bl_counter.value}')
+                    return None
         
         elif ez_counter.value:  # ez_counterのみの存在
             DBG_RENAME and log.info(f'  existing ez_counter: {ez_counter.value}')
             proposed_name = self.render_name()  # この時点で、名前は完成しているはず
-            if self.check_duplicate_names(bone, proposed_name):  # すでに同じ名前が存在する場合は、適切なカウンターの値を探す
-                ez_counter.set_str_value(1)
-                proposed_name = self.render_name()  # 一度カウンターを1に戻してから、適切なカウンターの値を探す
-                while self.check_duplicate_names(bone, proposed_name):
-                    ez_counter.increment()
-                    proposed_name = self.render_name()
-                    DBG_RENAME and log.warning(f'  counter incremented: {ez_counter.value}')
-            return proposed_name
+            if self.check_duplicate_names(proposed_name):
+                if ez_counter.find_unused_min_counter(proposed_name, self.namespace.names):
+                    return self.render_name()
+                else:
+                    log.error(f'  counter operation failed: {ez_counter.value}')
+                    return None
 
         else:  # カウンターの不在
             DBG_RENAME and log.info(f'  no existing counter')
             proposed_name = self.render_name()  # カウンターの不在の場合は、名前は完成しているはず
-            if self.check_duplicate_names(bone, proposed_name):  # すでに同じ名前が存在する場合は、適切なカウンターの値を探す 
-                ez_counter.set_str_value(1)
-                proposed_name = self.render_name()  # 一度カウンターを1に戻してから、適切なカウンターの値を探す
-                while self.check_duplicate_names(bone, proposed_name):
-                    ez_counter.increment()
-                    proposed_name = self.render_name()
-                    DBG_RENAME and log.warning(f'  counter incremented: {ez_counter.value}')
-            return proposed_name
+            if self.check_duplicate_names(proposed_name):
+                if ez_counter.find_unused_min_counter(proposed_name, self.namespace.names):
+                    return self.render_name()
+                else:
+                    log.error(f'  counter operation failed: {ez_counter.value}')
+                    return None
 
+    def find_unused_min_counter(self, counter_element, max_counter=9999):  # namesをcounter_elementに渡せばいいのでは?
+        forward = counter_element.forward
+        backward = counter_element.backward
+        digits = counter_element.digits
 
-    def check_duplicate_names(self, bone, name):
-        # TODO: ここでハッシュセットを使用して名前の重複をチェック
-        if name == bone.name:
-            return False  # 現在の名前と同じ場合は重複していないとみなす    
-        
-        return name in (b.name for b in bone.id_data.pose.bones) 
+        for i in range(1, max_counter + 1):
+            proposed_name = f"{forward}{i:0{digits}d}{backward}"  # カウンターを2桁と仮定
+            if not self.check_duplicate_names(proposed_name):
+                return i
+        return None  # 使用可能なカウンターが見つからない場合
+
+    def check_duplicate_names(self, name):
+        return name in self.namespace.names
 
     def chenge_all_settings(self, new_settings):
         for element in self.elements:
