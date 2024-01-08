@@ -306,16 +306,39 @@ class Namespace:
         self.names.remove(name)
 
 
-class Namespaces:
+class Namespaces(ABC):
+    ns_type = None  # なんとなくつけた
+
     def __init__(self):
         self.namespaces = {}
+        # TODO: armature以外のobjの調査
+    
+    @abstractmethod
+    def get_namespace(self, obj):
+        """If the namespace does not exist, create it."""
+        raise NotImplementedError
 
-    def register_object(self, obj):
-        # オブジェクトを登録し、名前空間を初期化または更新
-        if obj.name not in self.namespaces:
-            self.namespaces[obj.name] = Namespace()
-        for bone in obj.pose.bones:
-            self.namespaces[obj.name].add_name(bone.name)  # TODO: 次はここから作業する
+    def update_name(self, obj, old_name, new_name):
+        namespace = self.get_namespace(obj)
+        namespace.update_name(old_name, new_name)
+
+    def check_duplicate(self, obj, proposed_name):
+        # if obj.name == proposed_name:
+        #     return False  # 名前が変更されていない場合は、重複チェックを行わない
+        namespace = self.get_namespace(obj)
+        return proposed_name in namespace.names
+
+
+class PoseBonesNamespaces(Namespaces):
+    ns_type = "pose_bone"  # armature?
+
+    def get_namespace(self, bone):
+        armature = bone.id_data
+        if armature.name not in self.namespaces:
+            self.namespaces[armature.name] = Namespace()
+            for pose_bone in armature.pose.bones:
+                self.namespaces[armature.name].add_name(pose_bone.name)
+        return self.namespaces[armature.name]
 
 
 class NamingElements:  #(ABC)
@@ -323,7 +346,7 @@ class NamingElements:  #(ABC)
     def __init__(self, obj_type, settings):
         # 将来、typeで何をビルドするか指示される。mesh, material, bone, etc...
         self.elements = self.build_elements(obj_type, settings)  # TODO: obj_typeの扱いを考える
-        self.namespace = Namespace() 
+        self.ns = PoseBonesNamespaces()
 
     def build_elements(self, obj_type, settings):
         elements = []
@@ -356,6 +379,8 @@ class NamingElements:  #(ABC)
         else:
             raise ValueError(f"Unknown element type: {element_type}")
     
+    # ...
+
     def search_elements(self, name):
         DBG_RENAME and log.header(f'search_elements: {name}', False)
         for element in self.elements:
@@ -381,23 +406,31 @@ class NamingElements:  #(ABC)
         name = ''.join(name_parts)
         DBG_RENAME and log.info(f'render_name: {name}')
         return name
+    
+    def apply_name_change(self, obj, new_name):
+        old_name = obj.name
+        obj.name = new_name
+        self.namespace.update_name(obj, old_name, new_name)
+
+    def check_duplicate_and_update_counter(self, proposed_name, namespace):
+        pass # TODO: ここから作業
 
     def counter_operation(self, bone):
         bl_counter = next((e for e in self.elements if isinstance(e, BlCounterElement)), None)
         ez_counter = next((e for e in self.elements if isinstance(e, EzCounterElement)), None)
 
-        if bl_counter.value:  # bl_counterが存在する場合は、適切にez_counterを生成してbl_counterを削除する必要がある
-            if ez_counter.value:   # すでにez_counterが存在する場合は、ez_counterにbl_counterの値を加算してbl_counterを削除 
+        if bl_counter.value:
+            if ez_counter.value:  # bl_counterとez_counterの両方が存在する場合
                 DBG_RENAME and log.info(f'  existing bl_counter and ez_counter: {bl_counter.value}, {ez_counter.value}')
-                ez_counter.add(bl_counter.get_value())  # もしかしたら不要 1からカウンターを探すプロセスに統一する?どちらが効率的か?
+                ez_counter.add(bl_counter.get_value())  # ez_counter + bl_counter  # もしかしたら不要 1からカウンターを探すプロセスに統一する?どちらが効率的か?
                 bl_counter.value = None
-            else:  # ez_counterが存在しない場合は、ez_counterにbl_counterの値を渡してbl_counterを削除
+            else:  # bl_counterのみ存在
                 DBG_RENAME and log.info(f'  existing bl_counter: {bl_counter.value}')
                 ez_counter.set_value(bl_counter.get_value())
                 bl_counter.value = None
             proposed_name = self.render_name()  # この時点で、名前は完成しているはず
-            if self.check_duplicate_names(proposed_name):
-                if ez_counter.find_unused_min_counter(proposed_name, self.namespace.names):
+            if self.check_duplicate_names(proposed_name):  # 重複チェック
+                if ez_counter.find_unused_min_counter(proposed_name, self.ns.get_namespace(bone).names):
                     return self.render_name()
                 else:
                     log.error(f'  counter operation failed: {bl_counter.value}')
@@ -423,16 +456,16 @@ class NamingElements:  #(ABC)
                     log.error(f'  counter operation failed: {ez_counter.value}')
                     return None
 
-    def find_unused_min_counter(self, counter_element, max_counter=9999):  # namesをcounter_elementに渡せばいいのでは?
-        forward = counter_element.forward
-        backward = counter_element.backward
-        digits = counter_element.digits
+    # def find_unused_min_counter(self, counter_element, max_counter=9999):  # namesをcounter_elementに渡せばいいのでは?
+    #     forward = counter_element.forward
+    #     backward = counter_element.backward
+    #     digits = counter_element.digits
 
-        for i in range(1, max_counter + 1):
-            proposed_name = f"{forward}{i:0{digits}d}{backward}"  # カウンターを2桁と仮定
-            if not self.check_duplicate_names(proposed_name):
-                return i
-        return None  # 使用可能なカウンターが見つからない場合
+    #     for i in range(1, max_counter + 1):
+    #         proposed_name = f"{forward}{i:0{digits}d}{backward}"  # カウンターを2桁と仮定
+    #         if not self.check_duplicate_names(proposed_name):
+    #             return i
+    #     return None  # 使用可能なカウンターが見つからない場合
 
     def check_duplicate_names(self, name):
         return name in self.namespace.names
