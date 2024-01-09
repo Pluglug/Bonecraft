@@ -2,7 +2,7 @@ import re
 # import bpy
 
 try:
-    from .naming_base import NamingManager
+    from .element_base import NamingManager
     from .operators.mixin_utils import ArmModeMixin  # vscodeではエラーになる Blenderでは問題ない
     from .debug import log, DBG_PARSE, DBG_RENAME
     from .naming_test_utils import (rename_preset, # test_selected_pose_bones, 

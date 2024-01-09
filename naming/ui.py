@@ -1,5 +1,5 @@
 import bpy
-from . naming_test_utils import rename_preset, rename_settings
+from .old.naming_test_utils import rename_preset, rename_settings
 from . debug import log
 
 bone_elements = rename_settings['bone_elements']
