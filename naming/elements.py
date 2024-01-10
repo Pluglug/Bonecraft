@@ -1,3 +1,21 @@
+try:
+    from . element_base import NamingElement
+    from . element_counter import BlCounterElement, EzCounterElement
+    from . element_text import TextElement, PositionElement
+    from . namespace import PoseBonesNamespaces
+
+    from .. debug import log, DBG_RENAME
+    from . naming_test_utils import (rename_settings, # test_selected_pose_bones, 
+                               random_test_names, generate_test_names)
+except:
+    from element_base import NamingElement
+    from element_counter import BlCounterElement, EzCounterElement
+    from element_text import TextElement, PositionElement
+
+    from debug import log, DBG_RENAME
+    from naming_test_utils import (rename_settings, # test_selected_pose_bones, 
+                               random_test_names, generate_test_names)
+
 
 class NamingElements:  #(ABC)
     # elements_type = None

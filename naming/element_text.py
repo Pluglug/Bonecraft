@@ -1,5 +1,13 @@
-from .element_base import NamingElement
-from ..regex_utils import capture_group, maybe_with_separator
+import re
+
+try:
+    from .element_base import NamingElement
+    from .regex_utils import capture_group, maybe_with_separator
+    from ..debug import log, DBG_RENAME
+except:
+    from element_base import NamingElement
+    from regex_utils import capture_group, maybe_with_separator
+    from debug import log, DBG_RENAME
 
 
 # class UnknownElement(NamingElement):

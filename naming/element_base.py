@@ -2,12 +2,12 @@ from abc import ABC, abstractmethod
 import re
 
 try:
-    from .debug import log, DBG_RENAME
-    from .operators.mixin_utils import ArmModeMixin
-    from .naming_test_utils import (rename_settings, # test_selected_pose_bones, 
+    from ..debug import log, DBG_RENAME
+    from ..operators.mixin_utils import ArmModeMixin
+    from . naming_test_utils import (rename_settings, # test_selected_pose_bones, 
                                random_test_names, generate_test_names, 
                                )
-    from .regex_utils import capture_group, maybe_with_separator
+    from . regex_utils import capture_group, maybe_with_separator
 except:  # Running Test in VSCode
     from debug import log, DBG_RENAME
     from operators.mixin_utils import ArmModeMixin

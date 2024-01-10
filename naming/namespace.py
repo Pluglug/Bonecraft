@@ -1,3 +1,6 @@
+from abc import ABC, abstractmethod
+import re
+
 
 class Namespace:
     def __init__(self):

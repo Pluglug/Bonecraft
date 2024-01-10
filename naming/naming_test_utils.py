@@ -2,7 +2,7 @@ import random
 import itertools
 
 try:
-    from .debug import log, DBG_PARSE
+    from ..debug import log, DBG_PARSE
 except:
     from debug import log, DBG_PARSE
 
