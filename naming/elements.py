@@ -69,6 +69,7 @@ class NamingElements:  #(ABC)
         for element in self.elements:
             element.standby()
             element.search(name)
+        # return ??? 何かしら返すと使いやすいかも
         
     def update_elements(self, new_elements: dict=None):
         if not new_elements and not isinstance(new_elements, dict):
