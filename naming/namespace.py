@@ -2,9 +2,15 @@ from abc import ABC, abstractmethod
 import re
 
 
-class Namespace:
-    def __init__(self):
+class Namespace(ABC):
+    type = None
+    def __init__(self, obj):
         self.names = set()  # ポーズボーンの名前を保持するハッシュセット
+
+    @abstractmethod
+    def register_namespace(self, obj):
+        """Implement a way to get a names from an object."""
+        raise NotImplementedError
 
     def update_name(self, old_name, new_name):
         if old_name in self.names:
@@ -17,18 +23,31 @@ class Namespace:
     def remove_name(self, name):
         self.names.remove(name)
 
+class PoseBonesNamespace(Namespace):
+    type = "pose_bone"  # armature?
+
+    def register_namespace(self, obj):
+        armature = obj.namespace
 
 class Namespaces(ABC):
-    ns_type = None  # なんとなくつけた
 
     def __init__(self):
         self.namespaces = {}
         # TODO: armature以外のobjの調査
     
     @abstractmethod
-    def get_namespace(self, obj):
-        """If the namespace does not exist, create it."""
+    def register_namespace(self, obj):
+        """Implement a way to get a names from an object."""
         raise NotImplementedError
+
+    # @abstractmethod
+    def get_namespace(self, obj):
+        # """If the namespace does not exist, create it."""
+        # raise NotImplementedError
+        if obj.namespace not in self.namespaces:
+            self.namespaces[obj.namespace] = Namespace()
+
+
 
     def update_name(self, obj, old_name, new_name):
         namespace = self.get_namespace(obj)
