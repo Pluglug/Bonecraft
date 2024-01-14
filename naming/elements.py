@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 try:
     from . element_base import NamingElement
     from . element_counter import BlCounterElement, EzCounterElement
@@ -16,51 +17,59 @@ except:
     from naming_test_utils import (rename_settings, # test_selected_pose_bones, 
                                random_test_names, generate_test_names)
 
+import bpy
 
-class NamingElements:  #(ABC)
-    # elements_type = None
+def uprefs():
+    return bpy.context.preferences
+
+def prefs():
+    return rename_settings
+    # return uprefs().addons[__package__].preferences
+
+class NamingElements(ABC):
+    object_type = None
     def __init__(self, obj_type, settings):
-        # 将来、typeで何をビルドするか指示される。mesh, material, bone, etc...
-        self.elements = self.build_elements(obj_type, settings)  # TODO: obj_typeの扱いを考える
+        self.elements = self.build_elements(obj_type, settings)
         self.ns = PoseBonesNamespaces()
         self.namespace = None
 
-    def build_elements(self, obj_type, settings):
+    def _create_elements(self, obj_type):
+        pr = prefs()  # TODO: prefsを作成後作り直す Elementが参照する?
+        elem_settings = pr['bone_elements']  # どうやってobj_typeを指定するか
+
         elements = []
-        elements_type = f"{obj_type}_elements"
-        for element_settings in settings[elements_type]:
-            element_type = element_settings["type"]
-            element = self.create_element(element_type, element_settings)
+        for elem_setting in elem_settings:
+            elem_type = elem_setting["type"]
+            element = self._create_element(elem_type, elem_setting)
             elements.append(element)
-            
-        elements.append(BlCounterElement({}))  # これはハードコードで良い
+        
+        elements.append(BlCounterElement({}))
         elements.sort(key=lambda e: e.get_order())
         DBG_RENAME and log.info( \
-            f'build_elements: {elements_type}:\n' + '\n'.join([f'  {e.identifier}: {e.name}' for e in elements]))
+            f'build_elements: {obj_type}:\n' + '\n'.join([f'  {e.identifier}: {e.name}' for e in elements]))
         return elements
     
-    def get_element_classes(self):
-        element_classes = {}  # 再利用する場合はキャッシュ
-        subclasses = NamingElement.__subclasses__()  # TODO: obj_typeに適したサブクラスを取得する必要がある
+    _element_classes = None
+    @classmethod
+    def _get_element_classes(cls):
+        if cls._element_classes:
+            return cls._element_classes
+        element_classes = {}
+        subclasses = NamingElement.__subclasses__()
         for subclass in subclasses:
             element_type = getattr(subclass, 'element_type', None)
             if element_type:
                 element_classes[element_type] = subclass
+        cls._element_classes = element_classes
         return element_classes
 
-    def create_element(self, element_type, settings):
-        element_classes = self.get_element_classes()
+    def _create_element(self, element_type, settings):
+        element_classes = self._get_element_classes()
         element_class = element_classes.get(element_type, None)
         if element_class:
             return element_class(settings)
         else:
             raise ValueError(f"Unknown element type: {element_type}")
-
-    # def search_elements(self, name):
-    #     DBG_RENAME and log.header(f'search_elements: {name}', False)
-    #     for element in self.elements:
-    #         element.standby()
-    #         element.search(name)
 
     def search_elements(self, bone):
         self.namespace = self.ns.get_namespace(bone)

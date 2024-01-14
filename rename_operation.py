@@ -19,18 +19,21 @@ class BoneInfo:
 
         # boneがapplyするべき?
 
-class EditableObject(ABC):
+
+class EditableObject(ABC):  # RenamableObject
+    obj_type = None
     def __init__(self, obj):
         self.obj = obj
     
 
 class EditableBone(EditableObject):
+    obj_type = "pose_bone"
     def __init__(self, bone):
         super().__init__(bone)
         self._init_rendering()
 
-        self.collection = None
-        self.color = None
+        # self.collection = None
+        # self.color = None
     
     def _init_rendering(self):
         self.namespace = self.obj.id_data
@@ -40,7 +43,6 @@ class EditableBone(EditableObject):
 
     def search_elements(self, naming_elements: NamingElements):
         naming_elements.search_elements(self)
-
 
 
 class BoneToRename:
