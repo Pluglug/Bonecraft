@@ -19,7 +19,7 @@ except:  # Running Test in VSCode
 
 class NamingElement(ABC):
     element_type = None
-    _group_counter = 0
+    _group_counter = 0  # TODO: 削除
 
     def __init__(self, settings):
         self.apply_settings(settings)

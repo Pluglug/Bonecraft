@@ -13,7 +13,7 @@ class Namespace(ABC):
         self.names = set()  # ハッシュセット
 
     @abstractmethod
-    def register_namespace(self, obj):
+    def register_namespace(self, obj: EditableObject):
         """Implement a way to get a names from an object."""
         raise NotImplementedError
 
@@ -51,10 +51,10 @@ class NamespaceManager:
             self.namespaces[ns_key] = self._create_namespace(obj)
         return self.namespaces[ns_key]
 
-    def _get_namespace_key(self, obj):
+    def _get_namespace_key(self, obj: EditableObject):
         return obj.namespace
 
-    def _create_namespace(self, obj):
+    def _create_namespace(self, obj: EditableObject):
         for subclass in Namespace.__subclasses__():
             if subclass.ns_type == obj.obj_type:
                 return subclass(obj)

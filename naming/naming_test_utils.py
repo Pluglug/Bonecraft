@@ -46,7 +46,7 @@ rename_preset = {
 
 
 rename_settings = {
-    "bone_elements": [
+    "pose_bone": [
         {
             "order": 1,
             "name": "prefix",  # キャプチャ用の名前 ユーザーが設定できるが重複は許されない

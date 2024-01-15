@@ -28,14 +28,14 @@ def prefs():
 
 class NamingElements(ABC):
     object_type = None
-    def __init__(self, obj_type, settings):
-        self.elements = self.build_elements(obj_type, settings)
-        self.ns = PoseBonesNamespaces()
-        self.namespace = None
+    def __init__(self, obj_type):
+        self.elements = self._create_elements(obj_type)
+        # self.ns = PoseBonesNamespaces()
+        # self.namespace = None
 
     def _create_elements(self, obj_type):
-        pr = prefs()  # TODO: prefsを作成後作り直す Elementが参照する?
-        elem_settings = pr['bone_elements']  # どうやってobj_typeを指定するか
+        pr = prefs()  # TODO: prefsを作成後作り直す obj_typeで切り分ける必要がある
+        elem_settings = pr['pose_bone']  # どうやってobj_typeを指定するか
 
         elements = []
         for elem_setting in elem_settings:
