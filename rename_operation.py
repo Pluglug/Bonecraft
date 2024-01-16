@@ -1,8 +1,11 @@
 import bpy
 
 from abc import ABC, abstractmethod
-from . naming import NamingElements, PoseBonesNamespace
+from . naming import NamingElements, NamespaceManager, PoseBonesNamespace
 
+
+# 目標: カウンターによる重複名の回避を完成させる　カウンターオブジェクトに委譲
+# 目標: リネームの実行を、リネームオブジェクトに委譲する
 
 class EditableObject(ABC):  # RenamableObject
     obj_type = None
@@ -10,6 +13,7 @@ class EditableObject(ABC):  # RenamableObject
         self.obj = obj
     
 
+# EditableBoneクラスがNamingElementsを使役し、NamespaceManagerを通じて名前空間を管理する
 class EditableBone(EditableObject):
     obj_type = "pose_bone"
     def __init__(self, bone):
@@ -26,32 +30,56 @@ class EditableBone(EditableObject):
         self.naming_elements = None
 
     def search_elements(self, naming_elements: NamingElements):
-        naming_elements.search_elements(self)
+        self.naming_elements = naming_elements
+        self.naming_elements.search_elements(self)
 
+    def update_elements(self, new_elements: dict):  
+        self.naming_elements.update_elements(new_elements)
 
+    def render_name(self):
+        self.new_name = self.naming_elements.render_name()
+        return self.new_name
+    
+    # def counter_operation(self, namespace: PoseBonesNamespace):
+    #     return namespace.counter_operation(self)
+
+    
 class RenamePoseBones:
     def __init__(self):
         self.es = NamingElements("pose_bone")
-        self.ns = NamespaceManager()
+        self.nsm = NamespaceManager()
 
-        self.original_names = []
-        self.new_names = []
+        self.rn_bones = []
 
     def execute_rename(self, operator: bpy.types.Operator, context: bpy.types.Context):
         selected_pose_bones = context.selected_pose_bones
         new_elements = operator.new_elements
 
-        for bone in selected_pose_bones:
-            b = EditableBone(bone)
-            self.es.search_elements(b)
-            self.es.update_elements(new_elements)
-            new_name = self.es.render_name()
-            if self.check_duplicate_names(b, new_name):
-                new_name = self.es.counter_operation(b)
+        self.rn_bones = [EditableBone(bone) for bone in selected_pose_bones]
+
+        for b in self.rn_bones:
+            self.nsm.get_namespace(b)  # nsmがnsを作成、保持  ここにあるのは違和感
+            
+            b.search_elements(self.es)
+            b.update_elements(new_elements)
+            new_name = b.render_name()
+            if self.nsm.check_duplicate(b, new_name):
+                new_name = b.counter_operation(self.nsm.get_namespace(b))
                 if new_name:
-                    self.es.apply_name_change(b, new_name)
-            else:
-                self.es.apply_name_change(b, new_name)
+                    b.apply_name_change(new_name)
+
+
+        # self.nsm.get_namespace(b)  # nsmがnsを作成、保持
+
+        # self.es.search_elements(b)
+        # self.es.update_elements(new_elements)
+        # new_name = self.es.render_name()
+        # if self.check_duplicate_names(b, new_name):
+        #     new_name = self.es.counter_operation(b)
+        #     if new_name:
+        #         self.es.apply_name_change(b, new_name)
+        # else:
+        #     self.es.apply_name_change(b, new_name)
 
     # def execute_rename(self, operator: bpy.types.Operator, context: bpy.types.Context):
     #     selected_pose_bones = context.selected_pose_bones

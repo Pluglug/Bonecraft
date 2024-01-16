@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import re
 
-try:
+try: # Running in Blender
     from ..debug import log, DBG_RENAME
     from ..operators.mixin_utils import ArmModeMixin
     from . naming_test_utils import (rename_settings, # test_selected_pose_bones, 

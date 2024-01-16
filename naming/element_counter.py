@@ -3,10 +3,12 @@ import re
 try:
     from .element_base import NamingElement
     from .regex_utils import capture_group, maybe_with_separator
+    from . namespace import Namespace
     from ..debug import log, DBG_RENAME
 except:
     from element_base import NamingElement
     from regex_utils import capture_group, maybe_with_separator
+    from namespace import Namespace
     from debug import log, DBG_RENAME
 
 
@@ -60,11 +62,12 @@ class EzCounterElement(NamingElement):
         self.value = f'{int_value:0{self.digits}d}'
         self.value_int = int_value
 
-    def find_unused_min_counter(self, name, name_set, max_counter=9999):
+    # 可能な最小のカウンター値を見つけることに特化すべき
+    def find_unused_min_counter(self, name, namespace: Namespace, max_counter=999):
         self.search(name)  # forward, backwardを更新 妥当?
         for i in range(1, max_counter + 1):
             proposed_name = f"{self.forward}{i:0{self.digits}d}{self.backward}"
-            if proposed_name not in name_set:
+            if proposed_name not in namespace.names:
                 self.set_value(i)
                 DBG_RENAME and log.info(f'  find_unused_min_counter: {self.value}')
                 return True

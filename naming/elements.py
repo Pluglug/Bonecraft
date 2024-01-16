@@ -3,11 +3,12 @@ try:
     from . element_base import NamingElement
     from . element_counter import BlCounterElement, EzCounterElement
     from . element_text import TextElement, PositionElement
-    from . namespace import PoseBonesNamespaces
+    from . namespace import Namespace, NamespaceManager, PoseBonesNamespace
 
     from .. debug import log, DBG_RENAME
     from . naming_test_utils import (rename_settings, # test_selected_pose_bones, 
                                random_test_names, generate_test_names)
+    from .. rename_operation import EditableObject
 except:
     from element_base import NamingElement
     from element_counter import BlCounterElement, EzCounterElement
@@ -16,6 +17,7 @@ except:
     from debug import log, DBG_RENAME
     from naming_test_utils import (rename_settings, # test_selected_pose_bones, 
                                random_test_names, generate_test_names)
+    from rename_operation import EditableObject
 
 import bpy
 
@@ -30,17 +32,18 @@ class NamingElements(ABC):
     object_type = None
     def __init__(self, obj_type):
         self.elements = self._create_elements(obj_type)
-        # self.ns = PoseBonesNamespaces()
-        # self.namespace = None
+
 
     def _create_elements(self, obj_type):
-        pr = prefs()  # TODO: prefsを作成後作り直す obj_typeで切り分ける必要がある
-        elem_settings = pr['pose_bone']  # どうやってobj_typeを指定するか
-
+        pr = prefs()
+        if obj_type not in pr:
+            raise ValueError(f"Unknown object type: {obj_type}")
+        settings: list = pr[obj_type]  # TODO: prefsを作成後作り直す
+        
         elements = []
-        for elem_setting in elem_settings:
-            elem_type = elem_setting["type"]
-            element = self._create_element(elem_type, elem_setting)
+        for elem_settings in settings:
+            elem_type = elem_settings["type"]
+            element = self._create_element(elem_type, elem_settings)
             elements.append(element)
         
         elements.append(BlCounterElement({}))
@@ -71,15 +74,12 @@ class NamingElements(ABC):
         else:
             raise ValueError(f"Unknown element type: {element_type}")
 
-    def search_elements(self, bone):
-        self.namespace = self.ns.get_namespace(bone)
-        name = bone.name
+    def search_elements(self, name: str):
         DBG_RENAME and log.header(f'search_elements: {name}', False)
         for element in self.elements:
             element.standby()
             element.search(name)
-        # return ??? 何かしら返すと使いやすいかも
-        
+
     def update_elements(self, new_elements: dict=None):
         if not new_elements and not isinstance(new_elements, dict):
             return
@@ -88,7 +88,7 @@ class NamingElements(ABC):
             if element.name in new_elements:
                 element.value = new_elements[element.name] or None
 
-    def render_name(self):
+    def render_name(self) -> str:
         elements_parts = [element.render() for element in self.elements \
                           if element.is_enabled() and element.value]
         name_parts = []
@@ -100,15 +100,15 @@ class NamingElements(ABC):
         DBG_RENAME and log.info(f'render_name: {name}')
         return name
     
-    def apply_name_change(self, obj, new_name):
-        old_name = obj.name
-        obj.name = new_name
-        self.namespace.update_name(obj, old_name, new_name)
+    # def apply_name_change(self, obj, new_name):
+    #     old_name = obj.name
+    #     obj.name = new_name
+    #     # self.namespace.update_name(obj, old_name, new_name)
 
-    def check_duplicate_and_update_counter(self, proposed_name, namespace):
-        pass # TODO: ここから作業
+    # def check_duplicate_and_update_counter(self, proposed_name, namespace):
+    #     pass 
 
-    def counter_operation(self, bone):
+    def counter_operation(self, obj: EditableObject, namespace: Namespace):
         bl_counter = next((e for e in self.elements if isinstance(e, BlCounterElement)), None)
         ez_counter = next((e for e in self.elements if isinstance(e, EzCounterElement)), None)
 
@@ -121,9 +121,9 @@ class NamingElements(ABC):
                 DBG_RENAME and log.info(f'  existing bl_counter: {bl_counter.value}')
                 ez_counter.set_value(bl_counter.get_value())
                 bl_counter.value = None
-            proposed_name = self.render_name()  # この時点で、名前は完成しているはず
-            if self.check_duplicate_names(proposed_name):  # 重複チェック
-                if ez_counter.find_unused_min_counter(proposed_name, self.ns.get_namespace(bone)):
+            proposed_name = self.render_name()
+            if self.check_duplicate_names(proposed_name):
+                if ez_counter.find_unused_min_counter(proposed_name, namespace.names):
                     return self.render_name()
                 else:
                     log.error(f'  counter operation failed: {bl_counter.value}')
@@ -131,7 +131,7 @@ class NamingElements(ABC):
         
         elif ez_counter.value:  # ez_counterのみの存在
             DBG_RENAME and log.info(f'  existing ez_counter: {ez_counter.value}')
-            proposed_name = self.render_name()  # この時点で、名前は完成しているはず
+            proposed_name = self.render_name()
             if self.check_duplicate_names(proposed_name):
                 if ez_counter.find_unused_min_counter(proposed_name, self.namespace.names):
                     return self.render_name()
@@ -141,7 +141,7 @@ class NamingElements(ABC):
 
         else:  # カウンターの不在
             DBG_RENAME and log.info(f'  no existing counter')
-            proposed_name = self.render_name()  # カウンターの不在の場合は、名前は完成しているはず
+            proposed_name = self.render_name()
             if self.check_duplicate_names(proposed_name):
                 if ez_counter.find_unused_min_counter(proposed_name, self.namespace.names):
                     return self.render_name()
@@ -149,22 +149,22 @@ class NamingElements(ABC):
                     log.error(f'  counter operation failed: {ez_counter.value}')
                     return None
 
-    def check_duplicate_names(self, name):
-        return name in self.namespace.names
+    # def check_duplicate_names(self, name):
+    #     return name in self.namespace.names
 
-    def chenge_all_settings(self, new_settings):
-        for element in self.elements:
-            element.change_settings(new_settings)
+    # def chenge_all_settings(self, new_settings):
+    #     for element in self.elements:
+    #         element.change_settings(new_settings)
 
-    def update_caches(self):
-        for element in self.elements:
-            if element.cache_invalidated:
-                element.update_cache()
+    # def update_caches(self):
+    #     for element in self.elements:
+    #         if element.cache_invalidated:
+    #             element.update_cache()
     
-    def print_elements(self, name):
-        self.search_elements(name)
-        for element in self.elements:
-            log.info(f"{element.identifier}: {element.value}")
+    # def print_elements(self, name):
+    #     self.search_elements(name)
+    #     for element in self.elements:
+    #         log.info(f"{element.identifier}: {element.value}")
 
     # # -----counter operations-----
     # @staticmethod

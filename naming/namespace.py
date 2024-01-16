@@ -7,10 +7,9 @@ from .. rename_operation import EditableObject, EditableBone
 
 class Namespace(ABC):
     ns_type = None
-    # EOサブクラスを指定する案  `issubclass(obj_class, subclass.tgt_class)`
-    # tgt_class = EditableObject  
     def __init__(self, obj):
         self.names = set()  # ハッシュセット
+        self.register_namespace(obj)
 
     @abstractmethod
     def register_namespace(self, obj: EditableObject):
@@ -35,13 +34,16 @@ class Namespace(ABC):
 class PoseBonesNamespace(Namespace):
     ns_type = "pose_bone"  # armature?
     def register_namespace(self, obj: EditableBone):
-        if isinstance(obj, EditableBone):
-            armature = obj.id_data
-            for pose_bone in armature.pose.bones:
-                self.add_name(pose_bone.name)
+        if not isinstance(obj, EditableBone):
+            raise ValueError(f"PoseBonesNamespace can only register EditableBone: {obj}")
+
+        armature = obj.id_data
+        for pose_bone in armature.pose.bones:
+            self.add_name(pose_bone.name)
 
 
 class NamespaceManager:
+    # EditableObjectのnamespaceに基づいて、適切なNamespaceを割り当てる
     def __init__(self):
         self.namespaces = {}
 
@@ -60,9 +62,9 @@ class NamespaceManager:
                 return subclass(obj)
         raise ValueError(f"Unknown namespace type: {obj.obj_type}")
 
-    # def update_name(self, obj, old_name, new_name):
-    #     namespace = self.get_namespace(obj)
-    #     namespace.update_name(old_name, new_name)
+    def update_name(self, obj, old_name, new_name):
+        namespace = self.get_namespace(obj)
+        namespace.update_name(old_name, new_name)
 
     def check_duplicate(self, obj, proposed_name):
         # if obj.name == proposed_name:
