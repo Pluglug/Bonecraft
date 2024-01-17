@@ -26,9 +26,11 @@ def uprefs():
 
 def prefs():
     return rename_settings
-    # return uprefs().addons[__package__].preferences
+    # return uprefs().addons[ADDON_ID].preferences
 
+# EditableObjectをここまで連れてくる?
 class NamingElements(ABC):
+    """名前生成のルールとロジック"""
     object_type = None
     def __init__(self, obj_type):
         self.elements = self._create_elements(obj_type)
@@ -74,6 +76,12 @@ class NamingElements(ABC):
         else:
             raise ValueError(f"Unknown element type: {element_type}")
 
+    def get_element(self, element_type: str) -> NamingElement:
+        for element in self.elements:
+            if element.element_type == element_type:
+                return element
+        raise ValueError(f"Unknown element type: {element_type}")
+
     def search_elements(self, name: str):
         DBG_RENAME and log.header(f'search_elements: {name}', False)
         for element in self.elements:
@@ -86,7 +94,13 @@ class NamingElements(ABC):
 
         for element in self.elements:
             if element.name in new_elements:
+                # new_elementsの値がNoneの場合は、その要素を無効化する
                 element.value = new_elements[element.name] or None
+        
+        new_name = self.render_name()
+        for element in self.elements:
+            # elementのキャプチャ要素を更新する
+            element.update(new_name)
 
     def render_name(self) -> str:
         elements_parts = [element.render() for element in self.elements \
@@ -99,18 +113,10 @@ class NamingElements(ABC):
         name = ''.join(name_parts)
         DBG_RENAME and log.info(f'render_name: {name}')
         return name
-    
-    # def apply_name_change(self, obj, new_name):
-    #     old_name = obj.name
-    #     obj.name = new_name
-    #     # self.namespace.update_name(obj, old_name, new_name)
-
-    # def check_duplicate_and_update_counter(self, proposed_name, namespace):
-    #     pass 
 
     def counter_operation(self, obj: EditableObject, namespace: Namespace):
-        bl_counter = next((e for e in self.elements if isinstance(e, BlCounterElement)), None)
-        ez_counter = next((e for e in self.elements if isinstance(e, EzCounterElement)), None)
+        bl_counter = self.get_element("bl_counter")
+        ez_counter = self.get_element("ez_counter")
 
         if bl_counter.value:
             if ez_counter.value:  # bl_counterとez_counterの両方が存在する場合

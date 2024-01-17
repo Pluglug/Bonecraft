@@ -44,6 +44,7 @@ class PoseBonesNamespace(Namespace):
 
 class NamespaceManager:
     # EditableObjectのnamespaceに基づいて、適切なNamespaceを割り当てる
+    # 名前空間の管理と名前の重複チェック
     def __init__(self):
         self.namespaces = {}
 
@@ -54,7 +55,7 @@ class NamespaceManager:
         return self.namespaces[ns_key]
 
     def _get_namespace_key(self, obj: EditableObject):
-        return obj.namespace
+        return obj.namespace_id
 
     def _create_namespace(self, obj: EditableObject):
         for subclass in Namespace.__subclasses__():
@@ -62,12 +63,21 @@ class NamespaceManager:
                 return subclass(obj)
         raise ValueError(f"Unknown namespace type: {obj.obj_type}")
 
-    def update_name(self, obj, old_name, new_name):
+    def update_name(self, obj: EditableObject, old_name, new_name):
         namespace = self.get_namespace(obj)
         namespace.update_name(old_name, new_name)
 
-    def check_duplicate(self, obj, proposed_name):
+    def check_duplicate(self, obj: EditableObject, proposed_name):
         # if obj.name == proposed_name:
         #     return False  # 名前が変更されていない場合は、重複チェックを行わない
         namespace = self.get_namespace(obj)
         return proposed_name in namespace.names
+
+    def find_unused_min_counter(self, obj: EditableObject, max_counter=999):
+        ez_counter = obj.naming_elements.get_element("ez_counter")
+        for i in range(1, max_counter + 1):
+            proposed_name = ez_counter.gen_proposed_name(i)
+            if not self.check_duplicate(obj, proposed_name):
+                return i
+        return None
+    

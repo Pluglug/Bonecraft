@@ -62,16 +62,19 @@ class EzCounterElement(NamingElement):
         self.value = f'{int_value:0{self.digits}d}'
         self.value_int = int_value
 
-    # 可能な最小のカウンター値を見つけることに特化すべき
-    def find_unused_min_counter(self, name, namespace: Namespace, max_counter=999):
-        self.search(name)  # forward, backwardを更新 妥当?
-        for i in range(1, max_counter + 1):
-            proposed_name = f"{self.forward}{i:0{self.digits}d}{self.backward}"
-            if proposed_name not in namespace.names:
-                self.set_value(i)
-                DBG_RENAME and log.info(f'  find_unused_min_counter: {self.value}')
-                return True
-        return False
+    def gen_proposed_name(self, i):
+        return f"{self.forward}{i:0{self.digits}d}{self.backward}"
+
+    # # 可能な最小のカウンター値を見つけることに特化すべき
+    # def find_unused_min_counter(self, name, namespace: Namespace, max_counter=999):
+    #     self.search(name)  # forward, backwardを更新 妥当?
+    #     for i in range(1, max_counter + 1):
+    #         proposed_name = f"{self.forward}{i:0{self.digits}d}{self.backward}"
+    #         if proposed_name not in namespace.names:
+    #             self.set_value(i)
+    #             DBG_RENAME and log.info(f'  find_unused_min_counter: {self.value}')
+    #             return True
+    #     return False
 
     # CounterElement に "." をセパレータとして設定しようとした場合に、
     # BlCounterElement との衝突が起こりうることを警告するポップアップを表示

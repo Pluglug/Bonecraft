@@ -54,6 +54,9 @@ class NamingElement(ABC):
             # self.backward = name[:match.start(self.identifier)]
             return True
         return False
+
+    def update(self, new_string):
+        self.search(new_string)
     
     def render(self):
         return self.get_separator(), self.value
@@ -78,7 +81,7 @@ class NamingElement(ABC):
         
         self.settings = settings
         self.order = settings.get('order', 0)
-        self.name = settings.get('name', self.identifier)
+        self.name = settings.get('name', self.identifier)  # TODO: idとか
         self.enabled = settings.get('enabled', True)
         self.separator = settings.get('separator', "_")
 

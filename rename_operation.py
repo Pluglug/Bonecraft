@@ -18,13 +18,13 @@ class EditableBone(EditableObject):
     obj_type = "pose_bone"
     def __init__(self, bone):
         super().__init__(bone)
-        self._init_rendering()
+        self._init_renaming()
 
         # self.collection = None
         # self.color = None
     
-    def _init_rendering(self):
-        self.namespace = self.obj.id_data
+    def _init_renaming(self):
+        self.namespace_id = self.obj.id_data
         self.original_name = self.obj.name
         self.new_name = ""
         self.naming_elements = None
@@ -68,6 +68,8 @@ class RenamePoseBones:
                 if new_name:
                     b.apply_name_change(new_name)
 
+    def counter_operation(self, bone: EditableBone):
+        return self.nsm.get_namespace(bone).counter_operation(bone)
 
         # self.nsm.get_namespace(b)  # nsmがnsを作成、保持
 
