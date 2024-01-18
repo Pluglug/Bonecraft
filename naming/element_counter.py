@@ -12,6 +12,8 @@ except:
     from debug import log, DBG_RENAME
 
 
+# TODO: EzとBlのカウンターを統合する
+
 class EzCounterElement(NamingElement):
     element_type = "ez_counter"
     
@@ -38,6 +40,7 @@ class EzCounterElement(NamingElement):
 
     def capture(self, match):
         if match:
+            self.value = match.group(self.name)
             self.value_int = int(self.value)
             self.start = match.start(self.name)
             self.end = match.end(self.name) 
@@ -58,23 +61,19 @@ class EzCounterElement(NamingElement):
     def get_separator(self):
         return self.separator  # + "|\\."
     
-    def set_value(self, int_value):
-        self.value = f'{int_value:0{self.digits}d}'
-        self.value_int = int_value
+    def set_value(self, value):
+        if value and isinstance(value, int):
+            self.value_int = value
+            self.value = f'{value:0{self.digits}d}'
+        elif value and isinstance(value, str):
+            self.value = value
+            self.value_int = int(value)
+        else:
+            self.value = None
+            self.value_int = None
 
     def gen_proposed_name(self, i):
         return f"{self.forward}{i:0{self.digits}d}{self.backward}"
-
-    # # 可能な最小のカウンター値を見つけることに特化すべき
-    # def find_unused_min_counter(self, name, namespace: Namespace, max_counter=999):
-    #     self.search(name)  # forward, backwardを更新 妥当?
-    #     for i in range(1, max_counter + 1):
-    #         proposed_name = f"{self.forward}{i:0{self.digits}d}{self.backward}"
-    #         if proposed_name not in namespace.names:
-    #             self.set_value(i)
-    #             DBG_RENAME and log.info(f'  find_unused_min_counter: {self.value}')
-    #             return True
-    #     return False
 
     # CounterElement に "." をセパレータとして設定しようとした場合に、
     # BlCounterElement との衝突が起こりうることを警告するポップアップを表示

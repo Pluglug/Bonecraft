@@ -12,7 +12,7 @@ class EditableObject(ABC):  # RenamableObject
     def __init__(self, obj):
         self.obj = obj
     
-
+# 個々のポーズボーンに関連する情報（名前、関連するアーマチュアなど）を管理し、`NamingElements`を使用して新しい名前を生成する
 # EditableBoneクラスがNamingElementsを使役し、NamespaceManagerを通じて名前空間を管理する
 class EditableBone(EditableObject):
     obj_type = "pose_bone"
@@ -31,7 +31,7 @@ class EditableBone(EditableObject):
 
     def search_elements(self, naming_elements: NamingElements):
         self.naming_elements = naming_elements
-        self.naming_elements.search_elements(self)
+        self.naming_elements.search_elements(self.original_name)
 
     def update_elements(self, new_elements: dict):  
         self.naming_elements.update_elements(new_elements)

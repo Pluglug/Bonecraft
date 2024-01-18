@@ -72,6 +72,12 @@ class NamingElement(ABC):
 
     def get_separator(self):
         return self.separator
+    
+    def set_value(self, value):
+        if value and isinstance(value, str):
+            self.value = value
+        else:
+            self.value = None
 
     def apply_settings(self, settings):
         self.cache_invalidated = True

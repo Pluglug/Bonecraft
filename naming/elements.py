@@ -49,7 +49,7 @@ class NamingElements(ABC):
             elements.append(element)
         
         elements.append(BlCounterElement({}))
-        elements.sort(key=lambda e: e.get_order())
+        elements.sort(key=lambda e: e.get_order())  # しなくてもいいかも
         DBG_RENAME and log.info( \
             f'build_elements: {obj_type}:\n' + '\n'.join([f'  {e.identifier}: {e.name}' for e in elements]))
         return elements
@@ -95,7 +95,8 @@ class NamingElements(ABC):
         for element in self.elements:
             if element.name in new_elements:
                 # new_elementsの値がNoneの場合は、その要素を無効化する
-                element.value = new_elements[element.name] or None
+                # element.value = new_elements[element.name] or None
+                element.set_value(new_elements[element.name] or None)
         
         new_name = self.render_name()
         for element in self.elements:
@@ -114,63 +115,19 @@ class NamingElements(ABC):
         DBG_RENAME and log.info(f'render_name: {name}')
         return name
 
-    def counter_operation(self, obj: EditableObject, namespace: Namespace):
-        bl_counter = self.get_element("bl_counter")
-        ez_counter = self.get_element("ez_counter")
+    def chenge_all_settings(self, new_settings):
+        for element in self.elements:
+            element.change_settings(new_settings)
 
-        if bl_counter.value:
-            if ez_counter.value:  # bl_counterとez_counterの両方が存在する場合
-                DBG_RENAME and log.info(f'  existing bl_counter and ez_counter: {bl_counter.value}, {ez_counter.value}')
-                ez_counter.add(bl_counter.get_value_int())  # ez_counter + bl_counter  # もしかしたら不要 1からカウンターを探すプロセスに統一する?どちらが効率的か?
-                bl_counter.value = None
-            else:  # bl_counterのみ存在
-                DBG_RENAME and log.info(f'  existing bl_counter: {bl_counter.value}')
-                ez_counter.set_value(bl_counter.get_value())
-                bl_counter.value = None
-            proposed_name = self.render_name()
-            if self.check_duplicate_names(proposed_name):
-                if ez_counter.find_unused_min_counter(proposed_name, namespace.names):
-                    return self.render_name()
-                else:
-                    log.error(f'  counter operation failed: {bl_counter.value}')
-                    return None
-        
-        elif ez_counter.value:  # ez_counterのみの存在
-            DBG_RENAME and log.info(f'  existing ez_counter: {ez_counter.value}')
-            proposed_name = self.render_name()
-            if self.check_duplicate_names(proposed_name):
-                if ez_counter.find_unused_min_counter(proposed_name, self.namespace.names):
-                    return self.render_name()
-                else:
-                    log.error(f'  counter operation failed: {ez_counter.value}')
-                    return None
-
-        else:  # カウンターの不在
-            DBG_RENAME and log.info(f'  no existing counter')
-            proposed_name = self.render_name()
-            if self.check_duplicate_names(proposed_name):
-                if ez_counter.find_unused_min_counter(proposed_name, self.namespace.names):
-                    return self.render_name()
-                else:
-                    log.error(f'  counter operation failed: {ez_counter.value}')
-                    return None
-
-    # def check_duplicate_names(self, name):
-    #     return name in self.namespace.names
-
-    # def chenge_all_settings(self, new_settings):
-    #     for element in self.elements:
-    #         element.change_settings(new_settings)
-
-    # def update_caches(self):
-    #     for element in self.elements:
-    #         if element.cache_invalidated:
-    #             element.update_cache()
+    def update_caches(self):
+        for element in self.elements:
+            if element.cache_invalidated:
+                element.update_cache()
     
-    # def print_elements(self, name):
-    #     self.search_elements(name)
-    #     for element in self.elements:
-    #         log.info(f"{element.identifier}: {element.value}")
+    def print_elements(self, name):
+        self.search_elements(name)
+        for element in self.elements:
+            log.info(f"{element.identifier}: {element.value}")
 
     # # -----counter operations-----
     # @staticmethod
