@@ -16,6 +16,8 @@ except:
 #     def build_pattern(self):
 #         # TODO: プリセットに無い語を検出可能にする
 #         return None
+#     # 検出時に、セパレーターで分割しながらorderを割り振る。
+#     # Elementのorderは、検出時に一時的に上書きされる。
 
 
 class TextElement(NamingElement):
