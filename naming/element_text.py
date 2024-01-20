@@ -41,14 +41,11 @@ class PositionElement(NamingElement):
         self.items = settings.get('items', [])
     
     def build_pattern(self):
-        sep = re.escape(self.get_separator())
+        sep = re.escape(self.separator)
         pattern = '|'.join(self.items)
 
         if self.get_order() == 1:
-            return f'(?P<{self.name}>{pattern}){sep}'
+            return f'(?P<{self.id}>{pattern}){sep}'
         # elif self.get_order() > 1:
         else:
-            return f'{sep}(?P<{self.name}>{pattern})'
-
-    def get_separator(self):
-        return self.separator
+            return f'{sep}(?P<{self.id}>{pattern})'
