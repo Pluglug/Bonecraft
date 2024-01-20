@@ -9,11 +9,14 @@ except:
     ADDON_ID = "MyAddon"
 
 
-CONSOLE_COLOR_INFO = '\033[34m'
-CONSOLE_COLOR_ERROR = '\033[31m'
-CONSOLE_COLOR_HEADER = '\033[1;32m'
-CONSOLE_COLOR_WARNING = '\033[33m'
+CONSOLE_COLOR_BLUE = '\033[34m'
+CONSOLE_COLOR_RED = '\033[31m'
+CONSOLE_COLOR_GREEN = '\033[1;32m'
+CONSOLE_COLOR_YELLOW = '\033[33m'
 
+CONSOLE_COLOR_LIGHT_BLUE = '\033[36m'
+CONSOLE_COLOR_PURPLE = '\033[35m'
+CONSOLE_COLOR_WHITE = '\033[37m'
 
 class VisualLog:
     def __init__(self):
@@ -27,6 +30,7 @@ class VisualLog:
 
     def disable_inspect(self):
         self.inspect_enabled = False
+        self.reset_indent()
 
     def _get_caller_info(self):
         if not self.inspect_enabled:
@@ -58,19 +62,19 @@ class VisualLog:
         title_text = '-' * (header_length // 2 - len(header_title) // 2) + header_title + '-' * (header_length // 2 - len(header_title) // 2)
 
         print("")
-        self._log(CONSOLE_COLOR_HEADER, title_text) if title else None
-        self._log(CONSOLE_COLOR_HEADER, msg)
+        self._log(CONSOLE_COLOR_GREEN, title_text) if title else None
+        self._log(CONSOLE_COLOR_GREEN, msg)
 
     def info(self, *args):
-        self._log(CONSOLE_COLOR_INFO, *args)
+        self._log(CONSOLE_COLOR_BLUE, *args)
         # TODO: tabを使うように見た目をそろえたい
         # TODO: 2つ以上の引数を渡したときに、つぎの引数を改行、インデントして表示するようにしたい
     
     def error(self, *args):
-        self._log(CONSOLE_COLOR_ERROR, *args)
+        self._log(CONSOLE_COLOR_RED, *args)
 
     def warning(self, *args):
-        self._log(CONSOLE_COLOR_WARNING, *args)
+        self._log(CONSOLE_COLOR_YELLOW, *args)
 
     # FIXME: あまり使わないので削除するかも
     @contextlib.contextmanager
