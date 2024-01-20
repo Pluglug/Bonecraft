@@ -51,7 +51,8 @@ class NamingElements(ABC):
         elements.append(BlCounterElement({}))
         elements.sort(key=lambda e: e.get_order())  # しなくてもいいかも
         DBG_RENAME and log.info( \
-            f'build_elements: {obj_type}:\n' + '\n'.join([f'  {e.identifier}: {e.name}' for e in elements]))
+            f'build_elements: {obj_type}:\n' + '\n' \
+                .join([f'  {e.identifier}: {e.name}' for e in elements]))
         return elements
     
     _element_classes = None
