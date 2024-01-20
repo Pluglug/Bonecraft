@@ -24,7 +24,7 @@ class NamingElement(ABC):
     def __init__(self, settings):
         self.apply_settings(settings)
         self.standby()
-        DBG_RENAME and log.info(f'init: {self.name}')
+        DBG_RENAME and log.info(f'init: {self.id}')
 
     @abstractmethod  # 抽象メソッドとインスタンスメソッドの混在はよろしくない?
     def build_pattern(self):
@@ -32,10 +32,7 @@ class NamingElement(ABC):
         pass
 
     def standby(self):
-        self.value: str = None # TODO: name_elementとかにする
-        # self.start = None
-        # self.end = None
-        # self.remainder = None
+        self._value: str = None
 
     def search(self, target_string):
         if self.cache_invalidated:
@@ -45,13 +42,13 @@ class NamingElement(ABC):
     
     def capture(self, match):
         if match:
-            self.value = match.group(self.name)
+            self.value = match.group(self.id)
             # 将来必要になるかもしれないので残しておく
-            # self.start = match.start(self.identifier)
-            # self.end = match.end(self.identifier)
-            # self.remainder = name[:match.start(self.identifier)] + name[match.end(self.identifier):]
-            # self.forward = name[match.end(self.identifier):]
-            # self.backward = name[:match.start(self.identifier)]
+            # self.start = match.start(self.id)
+            # self.end = match.end(self.id)
+            # self.forward = match.string[:self.start]
+            # self.backward = match.string[self.end:]
+            # self.remainder = self.forward + self.backward
             return True
         return False
 
@@ -59,37 +56,50 @@ class NamingElement(ABC):
         self.search(new_string)
     
     def render(self):
-        return self.get_separator(), self.value
+        return self.separator, self.value
 
-    def get_identifier(self):
-        return self.identifier
-
-    def get_order(self):
-        return self.order
-
-    def is_enabled(self):
-        return self.enabled
-
-    def get_separator(self):
-        return self.separator
+    @property
+    def value(self) -> str:
+        return self._value
     
-    def set_value(self, value):
-        if value and isinstance(value, str):
-            self.value = value
+    @value.setter
+    def value(self, new_value):
+        if new_value is not None:
+            try:
+                self._value = str(new_value)
+            except ValueError:
+                log.error(f"Value '{new_value}' cannot be converted to string.")
         else:
-            self.value = None
+            self._value = None
+
+    @property
+    def id(self):
+        return self._id
+    
+    @property
+    def name(self):
+        log.warn("name has been deprecated. Use id instead.")
+        return self.id
+
+    @property
+    def order(self):
+        return self._order
+
+    @property
+    def enabled(self):
+        return self._enabled
+
+    @property
+    def separator(self):
+        return self._separator
 
     def apply_settings(self, settings):
         self.cache_invalidated = True
-
-        if not hasattr(self, 'identifier'):
-            self.identifier = self.generate_identifier()  # TODO: 削除
         
-        self.settings = settings
-        self.order = settings.get('order', 0)
-        self.name = settings.get('name', self.identifier)  # TODO: idとか
-        self.enabled = settings.get('enabled', True)
-        self.separator = settings.get('separator', "_")
+        self._id = settings.get('name', self.generate_identifier())
+        self._order = settings.get('order', 0)
+        self._enabled = settings.get('enabled', True)
+        self._separator = settings.get('separator', "_")
 
     def invalidate_cache(self):
         self.cache_invalidated = True
@@ -97,12 +107,12 @@ class NamingElement(ABC):
     def update_cache(self):
         if self.cache_invalidated:
             self.compiled_pattern = re.compile(self.build_pattern())
-            DBG_RENAME and log.info(f'  update_cache: {self.identifier}: {self.compiled_pattern}')
+            DBG_RENAME and log.info(f'  update_cache: {self.id}: {self.compiled_pattern}')
             self.cache_invalidated = False
 
     @classmethod
-    def generate_identifier(cls):  # TODO: initのたびに呼ばれるので、もっと良い方法を考える 上位から与える? new_elementの渡し方が難しくなるからnameを使う。設定で一意制を保証する
-        # safe_name = re.sub(r'\W|^(?=\d)', '_', self.name).lower()  # さらに重複があった場合には、_1, _2, ... というようにする
+    def generate_identifier(cls):
+        # safe_name = re.sub(r'\W|^(?=\d)', '_', self.id).lower()  # さらに重複があった場合には、_1, _2, ... というようにする
         cls._group_counter += 1
         return f"{cls.element_type}_{cls._group_counter}"
     
