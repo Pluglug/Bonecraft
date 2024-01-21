@@ -26,7 +26,7 @@ class NamingElement(ABC):
         self.standby()
         DBG_RENAME and log.info(f'init: {self.id}')
 
-    @abstractmethod  # 抽象メソッドとインスタンスメソッドの混在はよろしくない?
+    @abstractmethod
     def build_pattern(self):
         """Each subclass should implement its own pattern building method."""
         pass
@@ -56,7 +56,8 @@ class NamingElement(ABC):
         self.search(new_string)
     
     def render(self):
-        return self.separator, self.value
+        if self.enabled and self.value:
+            return self.separator, self.value
 
     @property
     def value(self) -> str:
@@ -78,7 +79,7 @@ class NamingElement(ABC):
     
     @property
     def name(self):
-        log.warn("name has been deprecated. Use id instead.")
+        log.warning("name has been deprecated. Use id instead.")
         return self.id
 
     @property

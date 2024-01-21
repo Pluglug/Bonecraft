@@ -50,7 +50,7 @@ class NamingElements(ABC):
         
         elements.append(BlCounterElement({}))
         elements.sort(key=lambda e: e.get_order())  # しなくてもいいかも
-        DBG_RENAME and log.info( \
+        DBG_RENAME and log.info(
             f'build_elements: {obj_type}:\n' + '\n' \
                 .join([f'  {e.identifier}: {e.name}' for e in elements]))
         return elements
@@ -96,8 +96,8 @@ class NamingElements(ABC):
         for element in self.elements:
             if element.name in new_elements:
                 # new_elementsの値がNoneの場合は、その要素を無効化する
-                # element.value = new_elements[element.name] or None
-                element.set_value(new_elements[element.name] or None)
+                element.value = new_elements[element.name] or None
+                # element.set_value(new_elements[element.name] or None)
         
         new_name = self.render_name()
         for element in self.elements:
