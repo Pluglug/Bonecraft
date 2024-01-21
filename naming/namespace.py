@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 import re
 
 from .. rename_operation import EditableObject, EditableBone
+from . element_counter import CounterInterface, BlCounterElement, EzCounterElement
 
 
 class Namespace(ABC):
@@ -84,14 +85,9 @@ class NamespaceManager:
     def counter_operation(self, obj: EditableObject):
         bl_counter = obj.naming_elements.get_element("bl_counter")
         ez_counter = obj.naming_elements.get_element("ez_counter")
-        # TODO: ez_counter.enabled = Falseの場合を考慮する
-        if bl_counter.value:
-            if ez_counter.value:
-                ez_counter.add(bl_counter.get_value_int())
-            else:
-                ez_counter.set_value(bl_counter.get_value())
-            bl_counter.value = None
         
+        ez_counter.integrate_counter(bl_counter)
+
         proposed_name = obj.naming_elements.render_name()
         if self.check_duplicate(obj, proposed_name):
             available_counter = self.find_unused_min_counter(obj)
@@ -102,5 +98,12 @@ class NamespaceManager:
                 raise ValueError(f"Cannot find available counter for {proposed_name}")
 
         # return obj.naming_elements.render_name()
-            
-    # def replace_counter(self, obj: EditableObject):
+
+    def resolve_name_conflicts(self, obj: EditableObject):
+        proposed_name = obj.naming_elements.render_name()
+        if self.check_duplicate(obj, proposed_name):
+            available_counter = self.find_unused_min_counter(obj)
+            if available_counter:
+                obj.naming_elements.update_elements({"ez_counter": available_counter})
+            else:
+                raise ValueError(f"Cannot find available counter for {proposed_name}")
