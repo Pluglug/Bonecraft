@@ -4,6 +4,8 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from abc import ABC, abstractmethod
 import random
+import itertools
+
 try:
     from . element_base import NamingElement
     from . element_counter import BlCounterElement, EzCounterElement
@@ -84,7 +86,7 @@ class NamingElements: # (ABC):
 
     def get_element(self, element_type: str) -> NamingElement:
         for element in self.elements:
-            if element.element_type == element_type:
+            if element.id == element_type:  # TODO: idもしくはelement_type
                 return element
         raise ValueError(f"Unknown element type: {element_type}")
 
@@ -149,6 +151,34 @@ class NamingElements: # (ABC):
             test_names.append(''.join(name_parts))
         return test_names
 
+    def gen_test_names(self):  # たくさん出ちゃう
+        """全ての組み合わせの名前を生成する"""
+
+        # 各要素のリストを作成
+        prefixes = self.get_element('prefix').items + [None]
+        middles = self.get_element('middle').items  # 中間語は必須
+        suffixes = self.get_element('suffix').items + [None]
+        ez_counters = [f'{random.randint(1, 15):0{self.get_element("ez_counter").digits}d}' for _ in range(10)] + [None]
+        # ez_counters = [self.get_element('ez_counter').test_random_output() for _ in range(10)] + [None]
+        positions = self.get_element('position').items + [None]
+        bl_counters = [f'{random.randint(1, 15):0{self.get_element("bl_counter").digits}d}' for _ in range(10)] + [None]
+        # bl_counters = [self.get_element('bl_counter').test_random_output() for _ in range(10)] + [None]
+
+        # 各要素の直積を生成
+        all_combinations = itertools.product(prefixes, middles, suffixes, ez_counters, positions, bl_counters)
+
+        # 組み合わせから名前を生成
+        test_cases = []
+        for combination in all_combinations:
+            name_parts = []
+            for part, element in zip(combination, self.elements):
+                if part is not None and element.enabled:
+                    sep = element.separator if name_parts else ""
+                    name_parts.append(f'{sep}{part}')
+            test_cases.append(''.join(name_parts))
+        
+        return test_cases
+
     # # -----counter operations-----
     # @staticmethod
     # def check_duplicate_names(bone):
@@ -172,7 +202,8 @@ class NamingElements: # (ABC):
 
 if '__main__' == __name__:
     # testing
-    DBG_RENAME = False
+    # DBG_RENAME = False
     ne = NamingElements('pose_bone')
-    names = ne.gen_random_test_names(30)
+    # names = ne.gen_random_test_names(30)
+    names = ne.gen_test_names()
     print(names)
