@@ -1,10 +1,10 @@
 import random
 import itertools
 
-try:
-    from ..debug import log, DBG_PARSE
-except:
-    from debug import log, DBG_PARSE
+# try:
+#     from ..debug import log, DBG_PARSE
+# except:
+#     from debug import log, DBG_PARSE
 
 test_bone_names = [
     "Arm.L", "Leg.R", "Spine_01", "Hand.l", "Foot.r", "Head", "Finger01.L", "Toe01.R"

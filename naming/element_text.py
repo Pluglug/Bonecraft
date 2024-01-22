@@ -1,4 +1,5 @@
 import re
+import random
 
 try:
     from .element_base import NamingElement
@@ -33,6 +34,9 @@ class TextElement(NamingElement):
     def build_pattern(self):
         return '|'.join(self.items)
 
+    def test_random_output(self):
+        return self.separator, random.choice(self.items)
+
 
 class PositionElement(NamingElement):
     element_type = "position"
@@ -50,3 +54,6 @@ class PositionElement(NamingElement):
         # elif self.get_order() > 1:
         else:
             return f'{sep}(?P<{self.id}>{pattern})'
+
+    def test_random_output(self):
+        return self.separator, random.choice(self.items)

@@ -3,14 +3,12 @@ import re
 
 try: # Running in Blender
     from ..debug import log, DBG_RENAME
-    from ..operators.mixin_utils import ArmModeMixin
     from . naming_test_utils import (rename_settings, # test_selected_pose_bones, 
                                random_test_names, generate_test_names, 
                                )
     from . regex_utils import capture_group, maybe_with_separator
 except:  # Running Test in VSCode
     from debug import log, DBG_RENAME
-    from operators.mixin_utils import ArmModeMixin
     from naming_test_utils import (rename_settings, # test_selected_pose_bones, 
                                random_test_names, generate_test_names, 
                                )
@@ -116,5 +114,9 @@ class NamingElement(ABC):
         # safe_name = re.sub(r'\W|^(?=\d)', '_', self.id).lower()  # さらに重複があった場合には、_1, _2, ... というようにする
         cls._group_counter += 1
         return f"{cls.element_type}_{cls._group_counter}"
+    
+    @abstractmethod
+    def test_random_output(self):
+        pass
     
     # new_elementsを作るための便利メソッドが欲しい

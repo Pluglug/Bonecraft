@@ -1,8 +1,17 @@
+# import os, sys
+# own_dir = os.path.dirname(__file__)
+# print(f'own_dir: {own_dir}')
+# sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
 import bpy
 
 from abc import ABC, abstractmethod
-from . naming import NamingElements, NamespaceManager, PoseBonesNamespace
 
+try:
+    # FIXME: circular import
+    from . naming import NamingElements, NamespaceManager, PoseBonesNamespace
+except:
+    from naming import NamingElements, NamespaceManager, PoseBonesNamespace
 
 # 目標: カウンターによる重複名の回避を完成させる　カウンターオブジェクトに委譲
 # 目標: リネームの実行を、リネームオブジェクトに委譲する
@@ -39,9 +48,6 @@ class EditableBone(EditableObject):
     def render_name(self):
         self.new_name = self.naming_elements.render_name()
         return self.new_name
-    
-    # def counter_operation(self, namespace: PoseBonesNamespace):
-    #     return namespace.counter_operation(self)
 
     
 class RenamePoseBones:

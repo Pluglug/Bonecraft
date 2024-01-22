@@ -2,9 +2,12 @@ import bpy
 from abc import ABC, abstractmethod
 import re
 
-from .. rename_operation import EditableObject, EditableBone
-from . element_counter import CounterInterface, BlCounterElement, EzCounterElement
-
+try:
+    from .. rename_operation import EditableObject, EditableBone
+    from . element_counter import CounterInterface, BlCounterElement, EzCounterElement
+except:
+    from rename_operation import EditableObject, EditableBone
+    from element_counter import CounterInterface, BlCounterElement, EzCounterElement
 
 class Namespace(ABC):
     ns_type = None

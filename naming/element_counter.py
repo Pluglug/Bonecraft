@@ -1,16 +1,15 @@
 from abc import ABC, abstractmethod
 import re
+import random
 
 
 try:
     from .element_base import NamingElement
     from .regex_utils import capture_group, maybe_with_separator
-    from . namespace import Namespace
     from ..debug import log, DBG_RENAME
 except:
     from element_base import NamingElement
     from regex_utils import capture_group, maybe_with_separator
-    from namespace import Namespace
     from debug import log, DBG_RENAME
 
 
@@ -193,7 +192,11 @@ class EzCounterElement(NamingElement, CounterInterface):
         """ Generates a proposed name using the given index."""
         return f"{self.forward}{i:0{self.digits}d}{self.backward}"
 
-
+    def test_random_output(self):
+        # return self.separator, f'{random.randint(0, 10 ** self.digits - 1):0{self.digits}d}'
+        return self.separator,  f'{random.randint(1, 15):0{self.digits}d}'
+    
+    
 class BlCounterElement(NamingElement, CounterInterface):  # sys_counterとかにする?
     """ Buildin Blender counter pattern like ".001" """
     # right-most dot-number
@@ -250,6 +253,10 @@ class BlCounterElement(NamingElement, CounterInterface):  # sys_counterとかに
 
     def gen_proposed_name(self, i):
         return f"{self.forward}{i:0{self.digits}d}"
+
+    def test_random_output(self):
+        # return self.separator, f'{random.randint(0, 10 ** self.digits - 1):0{self.digits}d}'
+        return self.separator,  f'{random.randint(1, 15):0{self.digits}d}'
 
 
     # 末尾のデフォルトカウンター 順序入れ替え可能なカスタムカウンター

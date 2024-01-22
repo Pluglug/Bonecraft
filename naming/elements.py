@@ -1,4 +1,9 @@
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
+
 from abc import ABC, abstractmethod
+import random
 try:
     from . element_base import NamingElement
     from . element_counter import BlCounterElement, EzCounterElement
@@ -16,7 +21,7 @@ except:
 
     from debug import log, DBG_RENAME
     from naming_test_utils import (rename_settings, # test_selected_pose_bones, 
-                               random_test_names, generate_test_names)
+                                random_test_names, generate_test_names)
     from rename_operation import EditableObject
 
 import bpy
@@ -29,7 +34,7 @@ def prefs():
     # return uprefs().addons[ADDON_ID].preferences
 
 # EditableObjectをここまで連れてくる?
-class NamingElements(ABC):
+class NamingElements: # (ABC):
     """名前生成のルールとロジック"""
     object_type = None
     def __init__(self, obj_type):
@@ -49,10 +54,10 @@ class NamingElements(ABC):
             elements.append(element)
         
         elements.append(BlCounterElement({}))
-        elements.sort(key=lambda e: e.get_order())  # しなくてもいいかも
+        elements.sort(key=lambda e: e.order)
         DBG_RENAME and log.info(
             f'build_elements: {obj_type}:\n' + '\n' \
-                .join([f'  {e.identifier}: {e.name}' for e in elements]))
+                .join([f'  {e.element_type}: {e.id}' for e in elements]))
         return elements
     
     _element_classes = None
@@ -129,6 +134,20 @@ class NamingElements(ABC):
         self.search_elements(name)
         for element in self.elements:
             log.info(f"{element.identifier}: {element.value}")
+    
+    def gen_random_test_names(self, num_cases=10) -> list:
+        """ランダムな名前を生成する"""
+        test_names = []
+        for _ in range(num_cases):
+            elem_parts = [elem.test_random_output() for elem in self.elements \
+                          if random.choice([True, False])]
+            name_parts = []
+            for sep, value in elem_parts:
+                if name_parts:
+                    name_parts.append(sep)
+                name_parts.append(value)
+            test_names.append(''.join(name_parts))
+        return test_names
 
     # # -----counter operations-----
     # @staticmethod
@@ -150,3 +169,10 @@ class NamingElements(ABC):
     #         counter_value += 1
     #         elements['counter']['value'] = self.get_counter_string(counter_value)
     #     return elements
+
+if '__main__' == __name__:
+    # testing
+    DBG_RENAME = False
+    ne = NamingElements('pose_bone')
+    names = ne.gen_random_test_names(30)
+    print(names)
