@@ -11,7 +11,6 @@ test_bone_names = [
 ]
 
 # test_selected_pose_bones = [
-#      bpy.data.objects['SubArmature'].pose.bones["Bone"],
 #      bpy.data.objects['MyArmature'].pose.bones["Root"],
 #      bpy.data.objects['MyArmature'].pose.bones["Hand.l"],
 #      bpy.data.objects['MyArmature'].pose.bones["Spine_01"],
@@ -21,7 +20,11 @@ test_bone_names = [
 #      bpy.data.objects['MyArmature'].pose.bones["Hand.l.001"],
 #      bpy.data.objects['MyArmature'].pose.bones["Hand.l.002"],
 #      bpy.data.objects['MyArmature'].pose.bones["Finger01.L"],
-#      bpy.data.objects['MyArmature'].pose.bones["Finger02.L"]
+#      bpy.data.objects['MyArmature'].pose.bones["Finger02.L"],
+#      bpy.data.objects['SubArmature'].pose.bones["Bone"],
+#      bpy.data.objects['SubArmature'].pose.bones["Bone.001"],
+#      bpy.data.objects['SubArmature'].pose.bones["Bone.002"],
+#      bpy.data.objects['SubArmature'].pose.bones["Bone.003"],
 # ]
 
 # TODO: 将来的に、接頭語などではなく、順番で指定できるようにする
