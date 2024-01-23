@@ -3,16 +3,16 @@ import re
 
 try: # Running in Blender
     from ..debug import log, DBG_RENAME
-    from . naming_test_utils import (rename_settings, # test_selected_pose_bones, 
-                               random_test_names, generate_test_names, 
-                               )
-    from . regex_utils import capture_group, maybe_with_separator
+    # from . naming_test_utils import (rename_settings, # test_selected_pose_bones, 
+    #                            random_test_names, generate_test_names, 
+    #                            )
+    # from . regex_utils import capture_group, maybe_with_separator
 except:  # Running Test in VSCode
     from debug import log, DBG_RENAME
-    from naming_test_utils import (rename_settings, # test_selected_pose_bones, 
-                               random_test_names, generate_test_names, 
-                               )
-    from regex_utils import capture_group, maybe_with_separator
+    # from naming_test_utils import (rename_settings, # test_selected_pose_bones, 
+    #                            random_test_names, generate_test_names, 
+    #                            )
+    # from regex_utils import capture_group, maybe_with_separator
 
 
 class NamingElement(ABC):

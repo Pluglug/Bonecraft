@@ -3,10 +3,10 @@ from abc import ABC, abstractmethod
 import re
 
 try:
-    from .. rename_operation import EditableObject, EditableBone
+    from .. editable_object import EditableObject, EditableBone
     from . element_counter import CounterInterface, BlCounterElement, EzCounterElement
 except:
-    from rename_operation import EditableObject, EditableBone
+    from editable_object import EditableObject, EditableBone
     from element_counter import CounterInterface, BlCounterElement, EzCounterElement
 
 class Namespace(ABC):
@@ -41,7 +41,7 @@ class PoseBonesNamespace(Namespace):
         if not isinstance(obj, EditableBone):
             raise ValueError(f"PoseBonesNamespace can only register EditableBone: {obj}")
 
-        armature = obj.id_data
+        armature = obj.namespace_id
         for pose_bone in armature.pose.bones:
             self.add_name(pose_bone.name)
 

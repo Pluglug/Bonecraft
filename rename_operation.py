@@ -5,55 +5,22 @@
 
 import bpy
 
-from abc import ABC, abstractmethod
 
-try:
-    # FIXME: circular import
-    from . naming import NamingElements, NamespaceManager, PoseBonesNamespace
-except:
-    from naming import NamingElements, NamespaceManager, PoseBonesNamespace
+
+# try:
+#     # FIXME: circular import
+#     from . naming import NamingElements, NamespaceManager, PoseBonesNamespace
+# except:
+#     from naming import NamingElements, NamespaceManager, PoseBonesNamespace
 
 # 目標: カウンターによる重複名の回避を完成させる　カウンターオブジェクトに委譲
 # 目標: リネームの実行を、リネームオブジェクトに委譲する
 
-class EditableObject(ABC):  # RenamableObject
-    obj_type = None
-    def __init__(self, obj):
-        self.obj = obj
-    
-# 個々のポーズボーンに関連する情報（名前、関連するアーマチュアなど）を管理し、`NamingElements`を使用して新しい名前を生成する
-# EditableBoneクラスがNamingElementsを使役し、NamespaceManagerを通じて名前空間を管理する
-class EditableBone(EditableObject):
-    obj_type = "pose_bone"
-    def __init__(self, bone):
-        super().__init__(bone)
-        self._init_renaming()
-
-        # self.collection = None
-        # self.color = None
-    
-    def _init_renaming(self):
-        self.namespace_id = self.obj.id_data
-        self.original_name = self.obj.name
-        self.new_name = ""
-        self.naming_elements = None
-
-    def search_elements(self, naming_elements: NamingElements):
-        self.naming_elements = naming_elements
-        self.naming_elements.search_elements(self.original_name)
-
-    def update_elements(self, new_elements: dict):  
-        self.naming_elements.update_elements(new_elements)
-
-    def render_name(self):
-        self.new_name = self.naming_elements.render_name()
-        return self.new_name
-
     
 class RenamePoseBones:
     def __init__(self):
-        self.es = NamingElements("pose_bone")
-        self.nsm = NamespaceManager()
+        # self.es = NamingElements("pose_bone")
+        # self.nsm = NamespaceManager()
 
         self.rn_bones = []
 
@@ -61,7 +28,7 @@ class RenamePoseBones:
         selected_pose_bones = context.selected_pose_bones
         new_elements = operator.new_elements
 
-        self.rn_bones = [EditableBone(bone) for bone in selected_pose_bones]
+        # self.rn_bones = [EditableBone(bone) for bone in selected_pose_bones]
 
         for b in self.rn_bones:
             self.nsm.get_namespace(b)  # nsmがnsを作成、保持  ここにあるのは違和感
@@ -74,8 +41,8 @@ class RenamePoseBones:
                 if new_name:
                     b.apply_name_change(new_name)
 
-    def counter_operation(self, bone: EditableBone):
-        return self.nsm.get_namespace(bone).counter_operation(bone)
+    # def counter_operation(self, bone: EditableBone):
+    #     return self.nsm.get_namespace(bone).counter_operation(bone)
 
         # self.nsm.get_namespace(b)  # nsmがnsを作成、保持
 

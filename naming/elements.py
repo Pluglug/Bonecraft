@@ -8,28 +8,23 @@ import itertools
 
 try:
     from . element_base import NamingElement
-    from . element_counter import BlCounterElement, EzCounterElement
     from . element_text import TextElement, PositionElement
-    from . namespace import Namespace, NamespaceManager, PoseBonesNamespace
+    from . element_counter import BlCounterElement
 
     from .. debug import log, DBG_RENAME
-    from . naming_test_utils import (rename_settings, # test_selected_pose_bones, 
-                               random_test_names, generate_test_names)
-    from .. rename_operation import EditableObject
+    from . naming_test_utils import rename_settings
 except:
     from element_base import NamingElement
-    from element_counter import BlCounterElement, EzCounterElement
     from element_text import TextElement, PositionElement
+    from element_counter import BlCounterElement
 
     from debug import log, DBG_RENAME
-    from naming_test_utils import (rename_settings, # test_selected_pose_bones, 
-                                random_test_names, generate_test_names)
-    from rename_operation import EditableObject
+    from naming_test_utils import rename_settings
 
-import bpy
+# import bpy
 
-def uprefs():
-    return bpy.context.preferences
+# def uprefs():
+#     return bpy.context.preferences
 
 def prefs():
     return rename_settings

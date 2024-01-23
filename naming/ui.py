@@ -2,7 +2,7 @@ import bpy
 from .naming_test_utils import rename_preset, rename_settings
 
 
-bone_elements = rename_settings['bone_elements']
+bone_elements = rename_settings['pose_bone']
 
 class BONECRAFT_PT_rename_bone(bpy.types.Panel):
     bl_label = "Rename Bone"

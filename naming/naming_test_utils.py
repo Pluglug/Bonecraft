@@ -124,10 +124,6 @@ separator_items = [
     ('-', "Dash", "-"),
     (' ', "Space", " "),
 ]
-    
-
-
-
 
 def random_test_names(preset, num_cases=10):
     """ランダムな名前を生成する"""
