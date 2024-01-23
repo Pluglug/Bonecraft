@@ -138,7 +138,7 @@ class NamingElements: # (ABC):
             log.info(f"{element.identifier}: {element.value}")
     
     def gen_random_test_names(self, num_cases=10) -> list:
-        """ランダムな名前を生成する"""
+        """Generate random names for test cases"""
         test_names = []
         for _ in range(num_cases):
             elem_parts = [elem.test_random_output() for elem in self.elements \
@@ -151,33 +151,25 @@ class NamingElements: # (ABC):
             test_names.append(''.join(name_parts))
         return test_names
 
-    def gen_test_names(self):  # たくさん出ちゃう
-        """全ての組み合わせの名前を生成する"""
+    def gen_test_names(self) -> list:
+        """Generate all combinations of test case names"""
 
-        # 各要素のリストを作成
-        prefixes = self.get_element('prefix').items + [None]
-        middles = self.get_element('middle').items  # 中間語は必須
-        suffixes = self.get_element('suffix').items + [None]
-        ez_counters = [f'{random.randint(1, 15):0{self.get_element("ez_counter").digits}d}' for _ in range(10)] + [None]
-        # ez_counters = [self.get_element('ez_counter').test_random_output() for _ in range(10)] + [None]
-        positions = self.get_element('position').items + [None]
-        bl_counters = [f'{random.randint(1, 15):0{self.get_element("bl_counter").digits}d}' for _ in range(10)] + [None]
-        # bl_counters = [self.get_element('bl_counter').test_random_output() for _ in range(10)] + [None]
+        # Generate combinations where each element is present or absent
+        element_combinations = itertools.product([True, False], repeat=len(self.elements))
 
-        # 各要素の直積を生成
-        all_combinations = itertools.product(prefixes, middles, suffixes, ez_counters, positions, bl_counters)
-
-        # 組み合わせから名前を生成
         test_cases = []
-        for combination in all_combinations:
+        for combination in element_combinations:
             name_parts = []
-            for part, element in zip(combination, self.elements):
-                if part is not None and element.enabled:
-                    sep = element.separator if name_parts else ""
-                    name_parts.append(f'{sep}{part}')
+            for elem, include in zip(self.elements, combination):
+                if include:  #  and elem.enabled:
+                    sep, value = elem.test_random_output()
+                    if name_parts:
+                        name_parts.append(sep)
+                    name_parts.append(value)
             test_cases.append(''.join(name_parts))
-        
+
         return test_cases
+
 
     # # -----counter operations-----
     # @staticmethod
