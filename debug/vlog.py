@@ -55,7 +55,7 @@ class VisualLog:
         msg = caller_info + indent + ", ".join(str(arg) for arg in args)
         print(color + msg + '\033[0m')
 
-    # TODO: 引数でindentedできるようにする
+    # TODO: 引数でindentedできるようにする title=(str)にして、Noneの場合は非表示にする
     def header(self, msg, title=False, header_title=None):
         header_title = header_title if header_title else ADDON_ID
         header_length = max(len(msg), len(header_title))
