@@ -7,39 +7,79 @@ import bpy
 
 
 
-# try:
-#     # FIXME: circular import
-#     from . naming import NamingElements, NamespaceManager, PoseBonesNamespace
-# except:
-#     from naming import NamingElements, NamespaceManager, PoseBonesNamespace
+try:
+    from . naming import NamingElements, NamespaceManager
+    from . editable_object import EditableBone
+    from . operators.mixin_utils import ArmModeMixin
+    from . debug import log
+except:
+    from naming import NamingElements, NamespaceManager
+    from editable_object import EditableBone
+    from debug import log
 
 # 目標: カウンターによる重複名の回避を完成させる　カウンターオブジェクトに委譲
 # 目標: リネームの実行を、リネームオブジェクトに委譲する
 
-    
-class RenamePoseBones:
-    def __init__(self):
-        # self.es = NamingElements("pose_bone")
-        # self.nsm = NamespaceManager()
 
-        self.rn_bones = []
+import bpy
 
-    def execute_rename(self, operator: bpy.types.Operator, context: bpy.types.Context):
+class EZRENAMER_OT_NSTest(bpy.types.Operator, ArmModeMixin):
+    bl_idname = "ezrenamer.ns_test"
+    bl_label = "Namespace Test"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        log.header("RenameOperation", True)
+        es = NamingElements("pose_bone")
+        ns = NamespaceManager()
+
+        # 選択中のボーンを取得
         selected_pose_bones = context.selected_pose_bones
-        new_elements = operator.new_elements
 
-        # self.rn_bones = [EditableBone(bone) for bone in selected_pose_bones]
+        # 編集用オブジェクトを作成
+        rn_bones = [EditableBone(bone) for bone in selected_pose_bones]
 
-        for b in self.rn_bones:
-            self.nsm.get_namespace(b)  # nsmがnsを作成、保持  ここにあるのは違和感
+        for i, rnb in enumerate(rn_bones):
+            log.header(rnb.original_name)
+            log.info(f'arm: {rnb.namespace_id}')
+
+            _ = ns.get_namespace(rnb)
+            new_name = f'NewName.{i:02d}'
+
+            ns.update_name(rnb.original_name, new_name)
+        
+        log.header("更新後のNamespaces")
+        log.info(ns.namespaces)
+
+
+operator_classes = [
+    EZRENAMER_OT_NSTest
+]
+
+    
+# class RenamePoseBones:
+#     def __init__(self):
+#         self.es = NamingElements("pose_bone")
+#         self.nsm = NamespaceManager()
+
+#         self.rn_bones = []
+
+#     def execute_rename(self, operator: bpy.types.Operator, context: bpy.types.Context):
+#         selected_pose_bones = context.selected_pose_bones
+#         new_elements = operator.new_elements
+
+#         # self.rn_bones = [EditableBone(bone) for bone in selected_pose_bones]
+
+#         for b in self.rn_bones:
+#             self.nsm.get_namespace(b)  # nsmがnsを作成、保持  ここにあるのは違和感
             
-            b.search_elements(self.es)
-            b.update_elements(new_elements)
-            new_name = b.render_name()
-            if self.nsm.check_duplicate(b, new_name):
-                new_name = b.counter_operation(self.nsm.get_namespace(b))
-                if new_name:
-                    b.apply_name_change(new_name)
+#             b.search_elements(self.es)
+#             b.update_elements(new_elements)
+#             new_name = b.render_name()
+#             if self.nsm.check_duplicate(b, new_name):
+#                 new_name = b.counter_operation(self.nsm.get_namespace(b))
+#                 if new_name:
+#                     b.apply_name_change(new_name)
 
     # def counter_operation(self, bone: EditableBone):
     #     return self.nsm.get_namespace(bone).counter_operation(bone)

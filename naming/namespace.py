@@ -5,6 +5,7 @@ import re
 try:
     from .. editable_object import EditableObject, EditableBone
     from . element_counter import CounterInterface, BlCounterElement, EzCounterElement
+    from ..debug import log, DBG_RENAME
 except:
     from editable_object import EditableObject, EditableBone
     from element_counter import CounterInterface, BlCounterElement, EzCounterElement
@@ -40,10 +41,15 @@ class PoseBonesNamespace(Namespace):
     def register_namespace(self, obj: EditableBone):
         if not isinstance(obj, EditableBone):
             raise ValueError(f"PoseBonesNamespace can only register EditableBone: {obj}")
-
+        DBG_RENAME and log.header(f'Register namespace (obj: {obj})')  # DBG
         armature = obj.namespace_id
         for pose_bone in armature.pose.bones:
             self.add_name(pose_bone.name)
+        DBG_RENAME and log.info(f'Namespace registed: {self.names}')  # DBG
+
+    def update_name(self, old_name, new_name):  # DBG
+        super().update_name(old_name, new_name)  # DBG
+        DBG_RENAME and log.info(f'Namespace updated: {self.names}')  # DBG
 
 
 class NamespaceManager:
@@ -56,7 +62,10 @@ class NamespaceManager:
         ns_key = self._get_namespace_key(obj)
         if ns_key not in self.namespaces:
             self.namespaces[ns_key] = self._create_namespace(obj)
-        return self.namespaces[ns_key]
+        # return self.namespaces[ns_key]
+        r = self.namespaces[ns_key]  # DBG
+        DBG_RENAME and log.info(f'NamespaceManager.get_namespace: {r}')  # DBG
+        return r  # DBG
 
     def _get_namespace_key(self, obj: EditableObject):
         return obj.namespace_id
