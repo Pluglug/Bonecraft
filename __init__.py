@@ -42,13 +42,13 @@ addon.BL_VERSION = bl_info["blender"]
 from . operators import edit_ops
 # from . import naming_base
 from . import rename_operation
-from . import naming_ui
+from . import naming
 
 classes = []
 classes.extend(edit_ops.operator_classes)
 # classes.extend(naming_base.operator_classes)
 classes.extend(rename_operation.operator_classes)
-classes.extend(naming_ui.panel_classes)
+classes.extend(naming.panel_classes)
 
 
 def register():

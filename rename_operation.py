@@ -29,27 +29,35 @@ class EZRENAMER_OT_NSTest(bpy.types.Operator, ArmModeMixin):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        log.header("RenameOperation", True)
-        es = NamingElements("pose_bone")
-        ns = NamespaceManager()
+        with self.mode_context(context, 'POSE'):
+            log.header("RenameOperation", True)
+            es = NamingElements("pose_bone")
+            ns = NamespaceManager()
 
-        # 選択中のボーンを取得
-        selected_pose_bones = context.selected_pose_bones
+            # 選択中のボーンを取得
+            selected_pose_bones = context.selected_pose_bones
 
-        # 編集用オブジェクトを作成
-        rn_bones = [EditableBone(bone) for bone in selected_pose_bones]
+            # 編集用オブジェクトを作成
+            rn_bones = [EditableBone(bone) for bone in selected_pose_bones]  # TypeError: 'NoneType' object is not iterable # Editmode
 
-        for i, rnb in enumerate(rn_bones):
-            log.header(rnb.original_name)
-            log.info(f'arm: {rnb.namespace_id}')
+            for i, rnb in enumerate(rn_bones):
+                log.header(rnb.original_name)
+                log.info(f'arm: {rnb.namespace_id}')
 
-            _ = ns.get_namespace(rnb)
-            new_name = f'NewName.{i:02d}'
+                _ = ns.get_namespace(rnb)
+                new_name = f'NewName.{i+1:02d}'
 
-            ns.update_name(rnb.original_name, new_name)
-        
-        log.header("更新後のNamespaces")
-        log.info(ns.namespaces)
+                ns.update_name(rnb, rnb.original_name, new_name)
+            
+            log.header("Result")
+            # ns.namespacesの内容を表示
+            for ns_id, ns in ns.namespaces.items():
+                log.header(f'Namespace: {ns_id}')
+                for bone in ns.bones:
+                    log.info(f'{bone.original_name} -> {bone.new_name}')
+
+            # RuntimeError: class EZRENAMER_OT_ns_test, function execute: incompatible return value , , Function.result expected a set, not a NoneType
+            # Error: Python: RuntimeError: class EZRENAMER_OT_ns_test, function execute: incompatible return value , , Function.result expected a set, not a NoneType
 
 
 operator_classes = [
