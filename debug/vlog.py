@@ -4,7 +4,7 @@ import time
 import os
 
 try:
-    from addon import ADDON_ID
+    from addon import ADDON_ID  # TODO: 削除 package_idにする
 except:
     ADDON_ID = "MyAddon"
 
@@ -18,19 +18,20 @@ CONSOLE_COLOR_LIGHT_BLUE = '\033[36m'
 CONSOLE_COLOR_PURPLE = '\033[35m'
 CONSOLE_COLOR_WHITE = '\033[37m'
 
+
 class VisualLog:
-    def __init__(self):
+    def __init__(self):  # , package_id):
         self.indent_level = 0
         self.inspect_enabled = False
-        self.timer = time.time()
-
+        self.timer = None
 
     def enable_inspect(self):
+        """Display the module name and line number of the caller."""
         self.inspect_enabled = True
 
     def disable_inspect(self):
+        """Disable inspect."""
         self.inspect_enabled = False
-        self.reset_indent()
 
     def _get_caller_info(self):
         if not self.inspect_enabled:
@@ -51,32 +52,48 @@ class VisualLog:
 
     def _log(self, color, *args):
         caller_info = self._get_caller_info()
-        indent = "    " * self.indent_level
+        indent = "  " * self.indent_level
         msg = caller_info + indent + ", ".join(str(arg) for arg in args)
+        msg = msg.replace("\n", "\n" + indent)
+
         print(color + msg + '\033[0m')
 
-    # TODO: 引数でindentedできるようにする title=(str)にして、Noneの場合は非表示にする
-    def header(self, msg, title=False, header_title=None):
-        header_title = header_title if header_title else ADDON_ID
-        header_length = max(len(msg), len(header_title))
-        title_text = '-' * (header_length // 2 - len(header_title) // 2) + header_title + '-' * (header_length // 2 - len(header_title) // 2)
-
+    def header(self, msg, title=None):
+        """Green text indicating the start of a new operation."""
         print("")
-        self._log(CONSOLE_COLOR_GREEN, title_text) if title else None
+
+        if title is not None:
+            title = str(title)
+            header_length = max(len(msg), len(title))
+            title_text = title.center(header_length, '-')
+            self._log(CONSOLE_COLOR_GREEN, title_text)
+
         self._log(CONSOLE_COLOR_GREEN, msg)
+        return self
 
     def info(self, *args):
+        """Blue text indicating the progress of an operation."""
         self._log(CONSOLE_COLOR_BLUE, *args)
         # TODO: tabを使うように見た目をそろえたい
         # TODO: 2つ以上の引数を渡したときに、つぎの引数を改行、インデントして表示するようにしたい
+        return self
     
     def error(self, *args):
+        """Red text indicating an error that is not fatal."""
         self._log(CONSOLE_COLOR_RED, *args)
+        return self
+
+    def warn(self, *args):
+        """Yellow text indicating a warning that is not fatal."""
+        self._log(CONSOLE_COLOR_YELLOW, *args)
+        return self
 
     def warning(self, *args):
-        self._log(CONSOLE_COLOR_YELLOW, *args)
+        """Deprecated. Use warn() instead."""
+        self.warn(*args)
+        self.error("warning() is deprecated. Use warn() instead.")
+        return self
 
-    # FIXME: あまり使わないので削除するかも
     @contextlib.contextmanager
     def indented(self):
         self.increase()
@@ -85,24 +102,47 @@ class VisualLog:
         finally:
             self.decrease()
 
-    def increase(self):
-        self.indent_level += 1
+    def indent(self, count=1):
+        """Increase the indent level."""
+        self.indent_level = max(0, self.indent_level + count)
+        return self
 
-    def decrease(self):
-        if self.indent_level > 0:
-            self.indent_level -= 1
+    def increase(self, count=1):
+        """Increase the indent level."""
+        self.indent_level = max(0, self.indent_level + count)
+        return self
+
+    def decrease(self, count=1):
+        """Decrease the indent level."""
+        self.indent_level = max(0, self.indent_level - count)
+        return self
 
     def reset_indent(self):
+        """Reset the indent level to zero."""
         self.indent_level = 0
+        return self
     
-    def reset_timer(self, msg):
-        self.header(msg, header=False)
+    def start_timer(self, msg="Timer started.", title=None):
+        """Timer start and call header()"""
+        self.header(msg, title)
         self.timer = time.time()
+        return self
 
-    def time(self, msg):
+    def time(self, *args):
+        """Display the elapsed time since the timer was started."""
+        if self.timer is None:
+            self.warn("Timer is not started.")
+            return self
+
         now = time.time()
-        self.info(f"{msg}: {now - self.timer}")
-        self.timer = now
+        self.info(f'{now - self.timer:.4f} sec', *args)
+        return self
+    
+    def stop_timer(self, msg="Timer stopped.", *args):
+        """Stop the timer"""
+        self.time(msg, *args)
+        self.timer = None
+        return self
 
 
 log = VisualLog()
@@ -112,7 +152,7 @@ log = VisualLog()
 # log.header(msg)
 # log.info(*args)
 # log.error(*args)
-# log.warning(*args)
+# log.warn(*args)
 
 # Memo: Should consider indenting like this:
 # DBG_TREE and logi(" " * len(path) + "/".join(path))

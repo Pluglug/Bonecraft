@@ -14,6 +14,6 @@ __all__ += [name for name in globals() if name.startswith("DBG")]
 
 # Usage:
 # from debug import log, DBG_HOGE
-# DBG_HOGE and log.header("Start processing...")
+# DBG_HOGE and log.header("Start processing...").increase()
 # for item in data_list:
 #     DBG_HOGE and log.info("Processing item:", item, "Status:", process_status)
