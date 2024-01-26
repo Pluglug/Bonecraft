@@ -49,7 +49,7 @@ class PositionElement(NamingElement):
         sep = re.escape(self.separator)
         pattern = '|'.join(self.items)
 
-        if self.get_order() == 1:
+        if self.order == 1:
             return f'(?P<{self.id}>{pattern}){sep}'
         # elif self.get_order() > 1:
         else:

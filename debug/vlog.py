@@ -8,6 +8,7 @@ try:
 except:
     ADDON_ID = "MyAddon"
 
+ADDON_ID = "bonecraft"  # DBG
 
 CONSOLE_COLOR_BLUE = '\033[34m'
 CONSOLE_COLOR_RED = '\033[31m'
@@ -25,7 +26,7 @@ class VisualLog:
         self.inspect_enabled = False
         self.timer = None
 
-    def enable_inspect(self):
+    def enable_inspect(self):  # フラグ名と混同しやすい
         """Display the module name and line number of the caller."""
         self.inspect_enabled = True
 

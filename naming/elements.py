@@ -1,5 +1,5 @@
-import os, sys
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+# import os, sys
+# sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 
 from abc import ABC, abstractmethod
@@ -38,7 +38,6 @@ class NamingElements: # (ABC):
     object_type = None
     def __init__(self, obj_type):
         self.elements = self._create_elements(obj_type)
-
 
     def _create_elements(self, obj_type):
         DBG_RENAME and log.header(f'build_elements: {obj_type}').increase()
@@ -89,7 +88,7 @@ class NamingElements: # (ABC):
         raise ValueError(f"Unknown element type: {element_type}")
 
     def search_elements(self, name: str):
-        DBG_RENAME and log.header(f'search_elements: {name}', False)
+        DBG_RENAME and log.header(f'search_elements: {name}')
         for element in self.elements:
             element.standby()
             element.search(name)  # TODO: ETに前後の状態を渡せば、さらに正確に検索できる かもしれない
@@ -99,9 +98,9 @@ class NamingElements: # (ABC):
             return
 
         for element in self.elements:
-            if element.name in new_elements:
+            if element.id in new_elements:
                 # new_elementsの値がNoneの場合は、その要素を無効化する
-                element.value = new_elements[element.name] or None
+                element.value = new_elements[element.id] or None
                 # element.set_value(new_elements[element.name] or None)
         
         new_name = self.render_name()

@@ -30,11 +30,14 @@ class EditableBone(EditableObject):
 
     def search_elements(self, naming_elements):
         self.naming_elements = naming_elements
-        self.naming_elements.search_elements(self.original_name)
+        self.naming_elements.search_elements(self.name)
 
     def update_elements(self, new_elements: dict):  
         self.new_name = self.naming_elements.update_elements(new_elements).render_name()
         # return self
+    
+    def update_namespace(self):
+        self.namespace_manager.update_name(self, self.name, self.new_name)
 
     def render_name(self):
         self.new_name = self.naming_elements.render_name()

@@ -77,7 +77,7 @@ class NamingElement(ABC):
     
     @property
     def name(self):
-        log.warning("name has been deprecated. Use id instead.")
+        log.warn("name has been deprecated. Use id instead.")
         return self.id
 
     @property

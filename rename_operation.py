@@ -29,13 +29,13 @@ class EZRENAMER_OT_CreateTestArmature(bpy.types.Operator):
         bpy.ops.object.armature_add()
         arm = context.object
         arm.name = "TestArmature"
-        arm.show_name = True
+        arm.data.show_names = True
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.armature.select_all(action='SELECT')
         # ボーンを10本追加
-        for i in range(10):
+        for i in range(9):
             bpy.ops.armature.duplicate_move(
-                TRANSFORM_OT_translate={"value":(0, 0, 1)}
+                TRANSFORM_OT_translate={"value":(0, 1, 0)}
             )
 
         # ランダムな名前を付与
@@ -53,6 +53,7 @@ class EZRENAMER_OT_NSTest(bpy.types.Operator, ArmModeMixin):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
+        # log.enable_inspect()
         with self.mode_context(context, 'POSE'):
             log.header("RenameOperation", "TEST")
             es = NamingElements("pose_bone")
@@ -62,18 +63,16 @@ class EZRENAMER_OT_NSTest(bpy.types.Operator, ArmModeMixin):
             rn_bones = [EditableBone(bone) for bone in selected_pose_bones]
 
             for i, rnb in enumerate(rn_bones):
-                log.header(rnb.original_name)
-                log.info(f'arm: {rnb.namespace_id.name}')
+                log.header(f'arm: {rnb.namespace_id.name}, bone: {rnb.name}')
 
                 rnb.get_namespace(ns)
-                # new_name = f'NewName.{i+1:02d}'
                 rnb.search_elements(es)
                 rnb.update_elements({"prefix": "CTRL"})
                 rnb.counter_operation()
                 new_name = rnb.render_name()
-
+                rnb.update_namespace()
             
-            log.header("Result")
+            log.header("Result", "TEST")
             # ns.namespacesの内容を表示
             ns.print_namespaces()
 

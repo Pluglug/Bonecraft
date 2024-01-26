@@ -68,7 +68,7 @@ class CounterInterface(ABC):
 
     def add(self, value: 'str|int'):
         if isinstance(value, (int, str)):
-            num_int, _ = self._parse_value(value)
+            _, num_int = self._parse_value(value)
             if num_int is not None:
                 new_value_int = self.value_int + num_int
                 if new_value_int >= 0:

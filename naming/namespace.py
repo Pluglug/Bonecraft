@@ -91,7 +91,7 @@ class NamespaceManager:
                 return subclass(obj)
         raise ValueError(f"Unknown namespace type: {obj.obj_type}")
 
-    def update_name(self, obj: EditableObject, old_name, new_name):
+    def update_name(self, obj: EditableObject, old_name, new_name):  # TODO: update_namespace
         namespace = self.get_namespace(obj)  # 未作成でも通る
         namespace.update_name(old_name, new_name)
 

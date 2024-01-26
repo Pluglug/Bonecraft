@@ -146,7 +146,7 @@ operator_classes = [
 
 if __name__ == "__main__":
     DBG_RENAME = True
-    log.header("Naming Base Test", False)
+    log.header("Naming Base Test", "TEST")
     es = NamingElements("bone", rename_settings)
     # es.print_elements("CTRL_Root-05.L.001")
     # es.search_elements("CTRL_Root-05.L.001")

@@ -78,4 +78,4 @@ class StricterNameParser(NameParser):
             if parsed_name:
                 log.info(str(parsed_name) + " <- " + name)
             else:
-                log.warning(str(parsed_name) + " <- " + name)
+                log.warn(str(parsed_name) + " <- " + name)
