@@ -16,21 +16,36 @@ class EditableBone(EditableObject):
 
         # self.collection = None
         # self.color = None
-    
+
     def _init_renaming(self):
         self.namespace_id = self.obj.id_data
-        self.original_name = self.obj.name
+        self.name = self.obj.name
         self.new_name = ""
+        self.namespace_manager = None
         self.naming_elements = None
+
+    def get_namespace(self, namespace_manager):
+        self.namespace_manager = namespace_manager
+        return namespace_manager.get_namespace(self)
 
     def search_elements(self, naming_elements):
         self.naming_elements = naming_elements
         self.naming_elements.search_elements(self.original_name)
 
     def update_elements(self, new_elements: dict):  
-        self.naming_elements.update_elements(new_elements)
+        self.new_name = self.naming_elements.update_elements(new_elements).render_name()
+        # return self
 
     def render_name(self):
         self.new_name = self.naming_elements.render_name()
         return self.new_name
+    
+    def counter_operation(self):
+        return self.namespace_manager.counter_operation(self)
+
+    def dbg_ns_id(self):  # DBG
+        return id(self.namespace_id)  # DBG
+
+    def dbg_es_id(self):  # DBG
+        return id(self.naming_elements)  # DBG
     

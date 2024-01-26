@@ -30,6 +30,8 @@ def prefs():
     return rename_settings
     # return uprefs().addons[ADDON_ID].preferences
 
+# TODO: メインカウンター、サブカウンター属性を持たせる
+
 # EditableObjectをここまで連れてくる?
 class NamingElements: # (ABC):
     """名前生成のルールとロジック"""
@@ -39,6 +41,7 @@ class NamingElements: # (ABC):
 
 
     def _create_elements(self, obj_type):
+        DBG_RENAME and log.header(f'build_elements: {obj_type}').increase()
         pr = prefs()
         if obj_type not in pr:
             raise ValueError(f"Unknown object type: {obj_type}")
@@ -52,9 +55,9 @@ class NamingElements: # (ABC):
         
         elements.append(BlCounterElement({}))
         elements.sort(key=lambda e: e.order)
-        DBG_RENAME and log.info(
-            f'build_elements: {obj_type}:\n' + '\n' \
-                .join([f'  {e.element_type}: {e.id}' for e in elements]))
+        DBG_RENAME and log.decrease().info(
+            f'{obj_type}: {len(elements)} elements\n' + '\n' \
+                .join([f'  {e.id}: {e.element_type}' for e in elements]))
         return elements
     
     _element_classes = None
@@ -89,7 +92,7 @@ class NamingElements: # (ABC):
         DBG_RENAME and log.header(f'search_elements: {name}', False)
         for element in self.elements:
             element.standby()
-            element.search(name)
+            element.search(name)  # TODO: ETに前後の状態を渡せば、さらに正確に検索できる かもしれない
 
     def update_elements(self, new_elements: dict=None):
         if not new_elements and not isinstance(new_elements, dict):
@@ -105,10 +108,12 @@ class NamingElements: # (ABC):
         for element in self.elements:
             # elementのキャプチャ要素を更新する
             element.update(new_name)
+        # return new_name  # 再考
+        return self
 
     def render_name(self) -> str:
         elements_parts = [element.render() for element in self.elements \
-                          if element.is_enabled() and element.value]
+                          if element.enabled and element.value]
         name_parts = []
         for sep, value in elements_parts:
             if name_parts:
@@ -127,10 +132,9 @@ class NamingElements: # (ABC):
             if element.cache_invalidated:
                 element.update_cache()
     
-    def print_elements(self, name):
-        self.search_elements(name)
+    def pring_elements(self):
         for element in self.elements:
-            log.info(f"{element.identifier}: {element.value}")
+            log.info(f"{element.id}: {element.value}")
     
     def gen_random_test_names(self, num_cases=10) -> list:
         """Generate random names for test cases"""
@@ -166,31 +170,12 @@ class NamingElements: # (ABC):
         return test_cases
 
 
-    # # -----counter operations-----
-    # @staticmethod
-    # def check_duplicate_names(bone):
-    #     return bone.name in (b.name for b in bone.id_data.pose.bones)
-
-    # def replace_bl_counter(self, elements):
-    #     if 'bl_counter' in elements:
-    #         num = self.get_bl_counter_value(elements)
-    #         elements['counter'] = {'value': self.get_counter_string(num)}
-    #         del elements['bl_counter']
-    #     return elements
-
-    # # 名前の重複を確認しながら、カウンターをインクリメントしていく
-    # def increment_counter(self, bone, elements):  # boneもしくはarmature 明示的なのは...
-    #     # ここでboneが絶対に必要になる interfaceでboneもelementsも扱えるようにしたい
-    #     counter_value = self.get_counter_value(elements)
-    #     while self.check_duplicate_names(bone):
-    #         counter_value += 1
-    #         elements['counter']['value'] = self.get_counter_string(counter_value)
-    #     return elements
-
 if '__main__' == __name__:
     # testing
-    # DBG_RENAME = False
     ne = NamingElements('pose_bone')
-    # names = ne.gen_random_test_names(30)
-    names = ne.gen_test_names()
-    print(names)
+    log.header("Generate test names", 'TEST').increase()
+    names = ne.gen_random_test_names(5)
+    # names = ne.gen_test_names()
+    # log.info('\n'.join(names))
+    for name in names:
+        log.info(name)

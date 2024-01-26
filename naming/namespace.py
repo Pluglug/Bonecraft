@@ -67,10 +67,20 @@ class NamespaceManager:
         ns_key = self._get_namespace_key(obj)
         if ns_key not in self.namespaces:
             self.namespaces[ns_key] = self._create_namespace(obj)
-        # return self.namespaces[ns_key]
+        # return self.namespaces[ns_key] # self?
         r = self.namespaces[ns_key]  # DBG
         DBG_RENAME and log.info(f'NamespaceManager.get_namespace: {r}')  # DBG
         return r  # DBG
+    
+    # def has_namespace(self, obj: EditableObject):
+    #     ns_key = self._get_namespace_key(obj)
+    #     return ns_key in self.namespaces
+    
+    # def register_namespace(self, obj: EditableObject):
+    #     ns_key = self._get_namespace_key(obj)
+    #     if ns_key not in self.namespaces:
+    #         self.namespaces[ns_key] = self._create_namespace(obj)
+    #     self.namespaces[ns_key].register_namespace(obj)
 
     def _get_namespace_key(self, obj: EditableObject):
         return obj.namespace_id
@@ -82,7 +92,7 @@ class NamespaceManager:
         raise ValueError(f"Unknown namespace type: {obj.obj_type}")
 
     def update_name(self, obj: EditableObject, old_name, new_name):
-        namespace = self.get_namespace(obj)
+        namespace = self.get_namespace(obj)  # 未作成でも通る
         namespace.update_name(old_name, new_name)
 
     def check_duplicate(self, obj: EditableObject, proposed_name):
@@ -100,16 +110,20 @@ class NamespaceManager:
         return None
     
     def counter_operation(self, obj: EditableObject):
-        bl_counter = obj.naming_elements.get_element("bl_counter")
-        ez_counter = obj.naming_elements.get_element("ez_counter")
+        es = obj.naming_elements
+        # こういう書き方してよいの?
+        es.get_element("ez_counter").integrate_counter(es.get_element("bl_counter"))
+
+        # bl_counter = obj.naming_elements.get_element("bl_counter")
+        # ez_counter = obj.naming_elements.get_element("ez_counter")
         
-        ez_counter.integrate_counter(bl_counter)
+        # ez_counter.integrate_counter(bl_counter)
 
         proposed_name = obj.naming_elements.render_name()
         if self.check_duplicate(obj, proposed_name):
             available_counter = self.find_unused_min_counter(obj)
             if available_counter:
-                obj.naming_elements.update_elements({"ez_counter": available_counter})
+                obj.naming_elements.update_elements({"ez_counter": available_counter})  # return new_elements: dict ?
             else:
                 raise ValueError(f"Cannot find available counter for {proposed_name}")
         # return obj.naming_elements.render_name()

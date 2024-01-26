@@ -19,6 +19,33 @@ except:
 # 目標: カウンターによる重複名の回避を完成させる　カウンターオブジェクトに委譲
 # 目標: リネームの実行を、リネームオブジェクトに委譲する
 
+# テスト環境を整える
+class EZRENAMER_OT_CreateTestArmature(bpy.types.Operator):
+    bl_idname = "ezrenamer.create_test_armature"
+    bl_label = "Create Test Armature"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        bpy.ops.object.armature_add()
+        arm = context.object
+        arm.name = "TestArmature"
+        arm.show_name = True
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.armature.select_all(action='SELECT')
+        # ボーンを10本追加
+        for i in range(10):
+            bpy.ops.armature.duplicate_move(
+                TRANSFORM_OT_translate={"value":(0, 0, 1)}
+            )
+
+        # ランダムな名前を付与
+        es = NamingElements("pose_bone")
+        test_names = es.gen_random_test_names(10)
+        for i, bone in enumerate(arm.data.edit_bones):
+            bone.name = test_names[i]
+
+        return {'FINISHED'}
+
 
 class EZRENAMER_OT_NSTest(bpy.types.Operator, ArmModeMixin):
     bl_idname = "ezrenamer.ns_test"
@@ -27,33 +54,34 @@ class EZRENAMER_OT_NSTest(bpy.types.Operator, ArmModeMixin):
 
     def execute(self, context):
         with self.mode_context(context, 'POSE'):
-            log.header("RenameOperation", True)
+            log.header("RenameOperation", "TEST")
             es = NamingElements("pose_bone")
             ns = NamespaceManager()
 
-            # 選択中のボーンを取得
             selected_pose_bones = context.selected_pose_bones
-
-            # 編集用オブジェクトを作成
             rn_bones = [EditableBone(bone) for bone in selected_pose_bones]
 
             for i, rnb in enumerate(rn_bones):
                 log.header(rnb.original_name)
-                log.info(f'arm: {rnb.namespace_id}')
+                log.info(f'arm: {rnb.namespace_id.name}')
 
-                _ = ns.get_namespace(rnb)
-                new_name = f'NewName.{i+1:02d}'
+                rnb.get_namespace(ns)
+                # new_name = f'NewName.{i+1:02d}'
+                rnb.search_elements(es)
+                rnb.update_elements({"prefix": "CTRL"})
+                rnb.counter_operation()
+                new_name = rnb.render_name()
 
-                ns.update_name(rnb, rnb.original_name, new_name)
             
             log.header("Result")
             # ns.namespacesの内容を表示
             ns.print_namespaces()
-            
+
             return {'FINISHED'}
 
 operator_classes = [
-    EZRENAMER_OT_NSTest
+    EZRENAMER_OT_CreateTestArmature,
+    EZRENAMER_OT_NSTest,
 ]
 
     
