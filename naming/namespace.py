@@ -9,6 +9,8 @@ try:
 except:
     from editable_object import EditableObject, EditableBone
     from element_counter import CounterInterface, BlCounterElement, EzCounterElement
+    from debug import log, DBG_RENAME
+
 
 class Namespace(ABC):
     ns_type = None
@@ -34,6 +36,9 @@ class Namespace(ABC):
 
     def check_duplicate(self, proposed_name):
         return proposed_name in self.names
+    
+    def print_names(self):
+        log.info(f'{self.__class__.__name__}: {self.names}')
     
 
 class PoseBonesNamespace(Namespace):
@@ -81,7 +86,7 @@ class NamespaceManager:
         namespace.update_name(old_name, new_name)
 
     def check_duplicate(self, obj: EditableObject, proposed_name):
-        # if obj.name == proposed_name:
+        # if obj.name == proposed_name:  # obj.nameはない。
         #     return False  # 名前が変更されていない場合は、重複チェックを行わない
         namespace = self.get_namespace(obj)
         return proposed_name in namespace.names
@@ -104,11 +109,9 @@ class NamespaceManager:
         if self.check_duplicate(obj, proposed_name):
             available_counter = self.find_unused_min_counter(obj)
             if available_counter:
-                # ez_counter.set_value(available_counter)
                 obj.naming_elements.update_elements({"ez_counter": available_counter})
             else:
                 raise ValueError(f"Cannot find available counter for {proposed_name}")
-
         # return obj.naming_elements.render_name()
 
     def resolve_name_conflicts(self, obj: EditableObject):
@@ -119,3 +122,8 @@ class NamespaceManager:
                 obj.naming_elements.update_elements({"ez_counter": available_counter})
             else:
                 raise ValueError(f"Cannot find available counter for {proposed_name}")
+    
+    def print_namespaces(self):
+        for ns_id, ns in self.namespaces.items():
+            log.info(f'Namespace: {ns_id}')
+            ns.print_names()

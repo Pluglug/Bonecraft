@@ -5,8 +5,6 @@
 
 import bpy
 
-
-
 try:
     from . naming import NamingElements, NamespaceManager
     from . editable_object import EditableBone
@@ -15,13 +13,12 @@ try:
 except:
     from naming import NamingElements, NamespaceManager
     from editable_object import EditableBone
+    from operators.mixin_utils import ArmModeMixin
     from debug import log
 
 # 目標: カウンターによる重複名の回避を完成させる　カウンターオブジェクトに委譲
 # 目標: リネームの実行を、リネームオブジェクトに委譲する
 
-
-import bpy
 
 class EZRENAMER_OT_NSTest(bpy.types.Operator, ArmModeMixin):
     bl_idname = "ezrenamer.ns_test"
@@ -38,7 +35,7 @@ class EZRENAMER_OT_NSTest(bpy.types.Operator, ArmModeMixin):
             selected_pose_bones = context.selected_pose_bones
 
             # 編集用オブジェクトを作成
-            rn_bones = [EditableBone(bone) for bone in selected_pose_bones]  # TypeError: 'NoneType' object is not iterable # Editmode
+            rn_bones = [EditableBone(bone) for bone in selected_pose_bones]
 
             for i, rnb in enumerate(rn_bones):
                 log.header(rnb.original_name)
@@ -51,14 +48,9 @@ class EZRENAMER_OT_NSTest(bpy.types.Operator, ArmModeMixin):
             
             log.header("Result")
             # ns.namespacesの内容を表示
-            for ns_id, ns in ns.namespaces.items():
-                log.header(f'Namespace: {ns_id}')
-                for bone in ns.bones:
-                    log.info(f'{bone.original_name} -> {bone.new_name}')
-
-            # RuntimeError: class EZRENAMER_OT_ns_test, function execute: incompatible return value , , Function.result expected a set, not a NoneType
-            # Error: Python: RuntimeError: class EZRENAMER_OT_ns_test, function execute: incompatible return value , , Function.result expected a set, not a NoneType
-
+            ns.print_namespaces()
+            
+            return {'FINISHED'}
 
 operator_classes = [
     EZRENAMER_OT_NSTest
