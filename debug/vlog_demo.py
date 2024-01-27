@@ -22,7 +22,7 @@ def visual_log_in_wonderland():
         if DBG_TEA_PARTY:
             log.info("Alice joins the Mad Hatter's tea party")
             with log.indented():
-                log.warn("Mad Hatter: 'Time doesn't move here'")
+                log.warning("Mad Hatter: 'Time doesn't move here'")
 
     # Meeting the Queen of Hearts
     if DBG_QUEEN_OF_HEARTS:
@@ -114,7 +114,7 @@ def visual_log_in_wonderland3():
     with log.indented():
         if DBG_TEA_PARTY:
             log.info("Alice joins the Mad Hatter's tea party")
-            log.warn("Mad Hatter: 'Time doesn't move here'")
+            log.warning("Mad Hatter: 'Time doesn't move here'")
             log.decrease()  # Decrease indent after tea party
 
     # Meeting the Caterpillar (Optional)

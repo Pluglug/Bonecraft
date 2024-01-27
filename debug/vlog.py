@@ -87,12 +87,12 @@ class VisualLog:
     def warn(self, *args):
         """Yellow text indicating a warning that is not fatal."""
         self._log(CONSOLE_COLOR_YELLOW, *args)
+        self.error("warn() is deprecated. Use warning() instead.")
         return self
 
     def warning(self, *args):
-        """Deprecated. Use warn() instead."""
+        """Yellow text indicating a warning that is not fatal."""
         self.warn(*args)
-        self.error("warning() is deprecated. Use warn() instead.")
         return self
 
     @contextlib.contextmanager
@@ -153,7 +153,7 @@ log = VisualLog()
 # log.header(msg)
 # log.info(*args)
 # log.error(*args)
-# log.warn(*args)
+# log.warning(*args)
 
 # Memo: Should consider indenting like this:
 # DBG_TREE and logi(" " * len(path) + "/".join(path))
