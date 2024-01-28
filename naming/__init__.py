@@ -8,4 +8,4 @@ from . element_counter import EzCounterElement, BlCounterElement
 from . elements import NamingElements
 from . namespace import Namespace, NamespaceManager, PoseBonesNamespace
 from . ui import panel_classes
-from . test_settings import rename_settings
+from . test_settings import rename_settings, setting_utils

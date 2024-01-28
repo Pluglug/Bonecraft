@@ -47,7 +47,10 @@ rename_settings = {
 
 
 # setting utils
-
+try: # Running in Blender
+    from ..debug import log, DBG_RENAME
+except:  # Running Test in VSCode
+    from debug import log, DBG_RENAME
 class Item:
     def __init__(self, item_data):
         self.name = item_data.get("name")
@@ -62,11 +65,14 @@ class Item:
             if num < len(self.items):
                 return self.items[num]
             else:
-                raise ValueError(f"Index out of range: {num}")
+                log.error(f"Index out of range: {num}")
+                return None
         elif self.type == "ez_counter":
-            return f"{num:0{self.digits}d}"
+            # return f"{num:0{self.digits}d}"
+            return num
         else:
-            raise ValueError(f"Unknown type: {self.type}")
+            log.error(f"Unknown type: {self.type}")
+            return None
 
 
 class Setting:
