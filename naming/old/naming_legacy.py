@@ -11,7 +11,7 @@ try:
 except :
     from operators.mixin_utils import ArmModeMixin
     from debug import log, DBG_PARSE, DBG_RENAME
-    from naming_test_utils import (rename_preset, # test_selected_pose_bones,
+    from naming.old.naming_test_utils import (rename_preset, # test_selected_pose_bones,
                                     random_test_names, generate_test_names, 
                                     )
     
@@ -241,66 +241,66 @@ class NamingManager:
     #     #     else:
     #     #         name = f'{name}{side_sep}{side}'
     
+import bpy
+class BONECRAFT_OT_RenameBone(bpy.types.Operator, ArmModeMixin):
+    bl_idname = "bonecraft.rename_bone_test"
+    bl_label = "Rename Bone Test"
+    bl_description = "Testing renaming bones"
 
-# class BONECRAFT_OT_RenameBone(bpy.types.Operator, ArmModeMixin):
-#     bl_idname = "bonecraft.rename_bone_test"
-#     bl_label = "Rename Bone Test"
-#     bl_description = "Testing renaming bones"
-
-#     nm = NamingManager(rename_preset)
+    nm = NamingManager(rename_preset)
     
-#     target_parts: bpy.props.EnumProperty(
-#         name="Target Parts",
-#         description="Target parts to rename",
-#         items=[
-#             ('prefix', "Prefix", "Prefix", 1),
-#             ('middle', "Middle", "Middle", 2),
-#             ('suffix', "Suffix", "Suffix", 3),
-#             # ('counter', "Counter", "Counter", 4),
-#             # ('side', "Side", "Side", 5),
-#         ],
-#         default='middle'
-#     )
-#     operation: bpy.props.EnumProperty(
-#         name="Operation",
-#         description="Operation to perform",
-#         items=[
-#             ('add/replace', "Add/Replace", "Add or replace", 1),
-#             ('delete', "Delete", "Delete", 2),
-#         ],
-#         default='add/replace'
-#     )
-#     preset_index: bpy.props.IntProperty(
-#         name="Preset Index",
-#         description="Preset index to use",
-#         default=0,
-#         min=0,
-#         max=100
-#     )
+    target_parts: bpy.props.EnumProperty(
+        name="Target Parts",
+        description="Target parts to rename",
+        items=[
+            ('prefix', "Prefix", "Prefix", 1),
+            ('middle', "Middle", "Middle", 2),
+            ('suffix', "Suffix", "Suffix", 3),
+            # ('counter', "Counter", "Counter", 4),
+            # ('side', "Side", "Side", 5),
+        ],
+        default='middle'
+    )
+    operation: bpy.props.EnumProperty(
+        name="Operation",
+        description="Operation to perform",
+        items=[
+            ('add/replace', "Add/Replace", "Add or replace", 1),
+            ('delete', "Delete", "Delete", 2),
+        ],
+        default='add/replace'
+    )
+    preset_index: bpy.props.IntProperty(
+        name="Preset Index",
+        description="Preset index to use",
+        default=0,
+        min=0,
+        max=100
+    )
 
-#     def execute(self, context):
-#         DBG_RENAME and log.info(f"Target parts: {self.target_parts}", f"Operation: {self.operation}", f"Preset index: {self.preset_index}")
-#         with self.mode_context(context, 'POSE'):
-#             self.rename_selected_pose_bones(context)
-#         return {'FINISHED'}
+    def execute(self, context):
+        DBG_RENAME and log.info(f"Target parts: {self.target_parts}", f"Operation: {self.operation}", f"Preset index: {self.preset_index}")
+        with self.mode_context(context, 'POSE'):
+            self.rename_selected_pose_bones(context)
+        return {'FINISHED'}
     
-#     def rename_selected_pose_bones(self, context):
-#         for bone in context.selected_pose_bones:
-#             self.rename_bone(bone)
+    def rename_selected_pose_bones(self, context):
+        for bone in context.selected_pose_bones:
+            self.rename_bone(bone)
 
-#     def rename_bone(self, bone):
-#         DBG_RENAME and log.info(f"Rename bone: {bone.name}")
-#         armature = bone.id_data
-#         elements = self.nm.search_elements(bone.name)  # ここでbl_counterが判明する
+    def rename_bone(self, bone):
+        DBG_RENAME and log.info(f"Rename bone: {bone.name}")
+        armature = bone.id_data
+        elements = self.nm.search_elements(bone.name)  # ここでbl_counterが判明する
 
-#         if self.operation == 'add/replace':
-#             new_elements = {self.target_parts: rename_preset[self.target_parts][self.preset_index]} 
-#         elif self.operation == 'delete':
-#             new_elements = {self.target_parts: ""}
+        if self.operation == 'add/replace':
+            new_elements = {self.target_parts: rename_preset[self.target_parts][self.preset_index]} 
+        elif self.operation == 'delete':
+            new_elements = {self.target_parts: ""}
 
-#         new_name = self.nm.rebuild_name(elements, new_elements)
-#         bone.name = new_name
-#         DBG_RENAME and log.info(f"New name: {bone.name}")
+        new_name = self.nm.rebuild_name(elements, new_elements)
+        bone.name = new_name
+        DBG_RENAME and log.info(f"New name: {bone.name}")
 
 
 # class BONECRAFT_OT_ToggleSide(bpy.types.Operator, ArmModeMixin):

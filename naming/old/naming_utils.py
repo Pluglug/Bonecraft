@@ -1,7 +1,7 @@
 import re
 
 from naming import NameParser
-from naming_test_utils import rename_preset, random_test_names, generate_test_names
+from naming.old.naming_test_utils import rename_preset, random_test_names, generate_test_names
 
 from debug import log, DBG_PARSE
 

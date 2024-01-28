@@ -12,14 +12,14 @@ try:
     from . element_counter import BlCounterElement
 
     from .. debug import log, DBG_RENAME
-    from . naming_test_utils import rename_settings
+    from . test_settings import rename_settings
 except:
     from element_base import NamingElement
     from element_text import TextElement, PositionElement
     from element_counter import BlCounterElement
 
     from debug import log, DBG_RENAME
-    from naming_test_utils import rename_settings
+    from test_settings import rename_settings
 
 # import bpy
 

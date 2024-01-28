@@ -12,7 +12,7 @@ try:
 except:
     from debug import log, DBG_RENAME
     from operators.mixin_utils import ArmModeMixin
-    from naming_test_utils import (rename_settings, # test_selected_pose_bones, 
+    from naming.old.naming_test_utils import (rename_settings, # test_selected_pose_bones, 
                                random_test_names, generate_test_names, 
                                )
     
@@ -152,7 +152,7 @@ if __name__ == "__main__":
     # es.search_elements("CTRL_Root-05.L.001")
     # name = es.render_name()
     # log.info(name)
-    from naming_test_utils import rename_preset
+    from naming.old.naming_test_utils import rename_preset
     test_names = random_test_names(rename_preset, 2)  # TODO: test_utilsを作り直す
     new_elements = {"prefix": "CTRL", "suffix": "", "position": None}
 
