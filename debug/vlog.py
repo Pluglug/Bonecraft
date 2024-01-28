@@ -65,7 +65,7 @@ class VisualLog:
 
         if title is not None:
             title = str(title)
-            header_length = max(len(msg), len(title))
+            header_length = max(len(msg), len(title)+8)
             title_text = title.center(header_length, '-')
             self._log(CONSOLE_COLOR_GREEN, title_text)
 
