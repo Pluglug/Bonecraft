@@ -114,9 +114,7 @@ class EZRENAMER_OT_RenamePoseBones(bpy.types.Operator, ArmModeMixin):
     def execute(self, context):
         if self.DBG_RENAME:
             log.header("RenameOperation", "EXECUTE")
-            log.info(f"Target parts: {self.target_parts}\n", \
-                     f"Operation: {self.operation}\n", \
-                     f"Index: {self.index}\n")
+            log.info(f"""Target parts: {self.target_parts}\nOperation: {self.operation}\nIndex: {self.index}\n""")
         
         with self.mode_context(context, 'POSE'):
             self.rename_selected_pose_bones(context)
@@ -144,11 +142,18 @@ class EZRENAMER_OT_RenamePoseBones(bpy.types.Operator, ArmModeMixin):
             else:
                 new_elements = self.get_new_elements()
 
-            rnb.update_elements(new_elements).update_namespace()
+            rnb.update_elements(new_elements)
+            rnb.counter_operation()  # つなげると、counter_operationでnew_nameが更新されない?
+            rnb.update_namespace()  # TODO: メソッドチェーンを考え直す必要がある
+            
+            self.DBG_RENAME and log.info(f"{i + 1} / {len(rn_bones)}: {rnb.name} -> {rnb.new_name}")
         
         # TODO: 結果の確認パネルを表示する
         
-        self.DBG_RENAME and log.header("Result", "EXECUTE")
+        self.DBG_RENAME and log.header("Before -> After", "RESULT")
+        for rnb in rn_bones:
+            rnb.convert_to_random()  # シンプルな解決策: 一度すべてのボーンをランダムな名前に変更する　これをしないと、Namespaceで重複がない場合でも、.001が発生する
+
         for rnb in rn_bones:
             self.DBG_RENAME and log.info(f"{rnb.name} -> {rnb.new_name}")
             rnb.apply_name_change()  # FIXME: ここで.001が発生する applyの順番を工夫する必要がある

@@ -73,6 +73,9 @@ class Item:
         else:
             log.error(f"Unknown type: {self.type}")
             return None
+    
+    def len_items(self):
+        return len(self.items)
 
 
 class Setting:

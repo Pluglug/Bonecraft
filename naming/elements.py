@@ -92,6 +92,8 @@ class NamingElements: # (ABC):
         for element in self.elements:
             element.standby()
             element.search(name)  # TODO: ETに前後の状態を渡せば、さらに正確に検索できる かもしれない
+        DBG_RENAME and log.info(
+            '\n'.join([f'  - {e.id}: {e.value}' for e in self.elements]))
 
     def update_elements(self, new_elements: dict=None):
         if not new_elements and not isinstance(new_elements, dict):

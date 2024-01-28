@@ -46,11 +46,11 @@ class PoseBonesNamespace(Namespace):
     def register_namespace(self, obj: EditableBone):
         if not isinstance(obj, EditableBone):
             raise ValueError(f"PoseBonesNamespace can only register EditableBone: {obj}")
-        DBG_RENAME and log.header(f'Register namespace (obj: {obj})')  # DBG
+        DBG_RENAME and log.header(f'Register namespace (arm: {obj.namespace_id.name})')  # DBG
         armature = obj.namespace_id
         for pose_bone in armature.pose.bones:
             self.add_name(pose_bone.name)
-        DBG_RENAME and log.info(f'Namespace registed: {self.names}')  # DBG
+        DBG_RENAME and log.info(f'  Namespace registed: {self.names}')  # DBG
 
     def update_name(self, old_name, new_name):  # DBG
         super().update_name(old_name, new_name)  # DBG
@@ -69,7 +69,7 @@ class NamespaceManager:
             self.namespaces[ns_key] = self._create_namespace(obj)
         # return self.namespaces[ns_key] # self?
         r = self.namespaces[ns_key]  # DBG
-        DBG_RENAME and log.info(f'NamespaceManager.get_namespace: {r}')  # DBG
+        # DBG_RENAME and log.info(f'NamespaceManager.get_namespace: {r.__class__.__name__} at {id(r)}')  # DBG
         return r  # DBG
     
     # def has_namespace(self, obj: EditableObject):
@@ -106,6 +106,7 @@ class NamespaceManager:
         for i in range(1, max_counter + 1):
             proposed_name = ez_counter.gen_proposed_name(i)
             if not self.check_duplicate(obj, proposed_name):
+                DBG_RENAME and log.info(f'find_unused_min_counter: {i}')
                 return i
         return None
     
@@ -119,11 +120,13 @@ class NamespaceManager:
         
         # ez_counter.integrate_counter(bl_counter)
 
-        proposed_name = obj.naming_elements.render_name()
+        proposed_name = obj.render_name()  # esのrender_nameを使っていたのでnew_nameが更新されていなかった
         if self.check_duplicate(obj, proposed_name):
             available_counter = self.find_unused_min_counter(obj)
             if available_counter:
-                obj.naming_elements.update_elements({"ez_counter": available_counter})  # return new_elements: dict ?
+                # obj.naming_elements.update_elements({"ez_counter": available_counter})  # return new_elements: dict ?
+                obj.update_elements({"ez_counter": available_counter})
+                DBG_RENAME and log.info(f'counter_operation: available_counter: {available_counter} {obj.name} -> {obj.new_name}')
             else:
                 raise ValueError(f"Cannot find available counter for {proposed_name}")
         # return obj.naming_elements.render_name()
@@ -133,7 +136,8 @@ class NamespaceManager:
         if self.check_duplicate(obj, proposed_name):
             available_counter = self.find_unused_min_counter(obj)
             if available_counter:
-                obj.naming_elements.update_elements({"ez_counter": available_counter})
+                # obj.naming_elements.update_elements({"ez_counter": available_counter})
+                obj.update_elements({"ez_counter": available_counter})
             else:
                 raise ValueError(f"Cannot find available counter for {proposed_name}")
     

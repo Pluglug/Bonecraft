@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+import random
 
+from .debug import log, DBG_RENAME
 
 class EditableObject(ABC):  # RenamableObject
     obj_type = None
@@ -40,12 +42,14 @@ class EditableBone(EditableObject):
 
     def update_elements(self, new_elements: dict):  
         self.new_name = self.naming_elements.update_elements(new_elements).render_name()
+        DBG_RENAME and log.info(f'update_elements: {self.name} -> {self.new_name}')
         self.updated = True
         return self
     
     def update_namespace(self):
         if self.updated:
             self.namespace_manager.update_name(self, self.name, self.new_name)
+            DBG_RENAME and log.info(f'update_namespace: {self.name} -> {self.new_name}')
             self.updated = False
         return self
 
@@ -59,6 +63,11 @@ class EditableBone(EditableObject):
     
     def confirm_rename(self):
         return self.name, self.new_name
+
+    def convert_to_random(self):
+        if self.name and self.new_name:
+            self.obj.name = str(random.randint(0, 1000000))
+        return self
 
     def apply_name_change(self):
         self.obj.name = self.new_name
