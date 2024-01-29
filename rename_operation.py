@@ -114,7 +114,7 @@ class EZRENAMER_OT_RenamePoseBones(bpy.types.Operator, ArmModeMixin):
     def execute(self, context):
         if self.DBG_RENAME:
             log.header("RenameOperation", "EXECUTE")
-            log.info(f"""Target parts: {self.target_parts}\nOperation: {self.operation}\nIndex: {self.index}\n""")
+            log.info(f"""Target parts: {self.target_parts}\nOperation: {self.operation}\nIndex: {self.index}""")
         
         with self.mode_context(context, 'POSE'):
             self.rename_selected_pose_bones(context)
@@ -124,7 +124,7 @@ class EZRENAMER_OT_RenamePoseBones(bpy.types.Operator, ArmModeMixin):
         selected_pose_bones = context.selected_pose_bones
         rn_bones = [EditableBone(bone) for bone in selected_pose_bones]
 
-        for i, rnb in enumerate(rn_bones):
+        for i, rnb in enumerate(rn_bones, start=1):
             self.DBG_RENAME and log.header(
                 f'arm: {rnb.namespace_id.name}, bone: {rnb.name}')
 

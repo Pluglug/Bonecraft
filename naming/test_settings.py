@@ -6,7 +6,7 @@ rename_settings = {
             "name": "prefix",  # キャプチャ用の名前 ユーザーが設定できるが重複は許されない
             "type": "text",
             "enabled": True,
-            "items": ["CTRL", "DEF", "MCH"],
+            "items": ["CTRL", "DEF", "MCH", "ORG", "DRV", "TRG"],
             "separator": "_",
         },
         {
@@ -22,11 +22,19 @@ rename_settings = {
             "name": "suffix",
             "type": "text",
             "enabled": True,
-            "items": ["Tweak", "Pole"],
+            "items": ["Tweak", "Pole", "IK", "FK", "Roll", "Rot", "Loc", "Scale"],
             "separator": "_",
         },
         {
             "order": 4,
+            "name": "misc",
+            "type": "text",
+            "enabled": True,
+            "items": ["int", "temp", "copy", "delete", "hide", "show", "hide_select", "show_select"],
+            "separator": "_",
+        },
+        {
+            "order": 5,
             "name": "ez_counter",
             "type": "ez_counter",
             "enabled": True,
@@ -34,7 +42,7 @@ rename_settings = {
             "separator": "-",
         },
         {
-            "order": 5,
+            "order": 6,
             "name": "position",
             "type": "position",  # positionである必要がなくなった  
             # "type": "text",　# 否定 セパレーター込みで一つの要素として扱う必要がある 正規表現を見直す必要がある searchロジックでのセパレーターの扱いを見直す
