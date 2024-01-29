@@ -82,7 +82,7 @@ class Setting:
     def __init__(self, setting_data):
         self.items = {item["name"]: Item(item) for item in setting_data}
 
-    def get_item(self, item_name):
+    def get_item(self, item_name):  # FIXME: Setting.items.itemsになっちゃう
         return self.items.get(item_name)
 
 
@@ -104,6 +104,6 @@ if __name__ == "__main__":
     tgt_name = "prefix"
     tgt_num = 1
 
-    r = pose_bone_setting.get_item(tgt_name).get_value(tgt_num)
-    print(r)
+    r = pose_bone_setting.get_item(tgt_name)  # .get_value(tgt_num)
+    print(type(r.items))
     

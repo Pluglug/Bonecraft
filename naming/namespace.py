@@ -121,6 +121,7 @@ class NamespaceManager:
         # ez_counter.integrate_counter(bl_counter)
 
         proposed_name = obj.render_name()  # esのrender_nameを使っていたのでnew_nameが更新されていなかった
+        # new_nameの更新が明示的でなかったため、counter_operationの結果が反映されていなかった
         if self.check_duplicate(obj, proposed_name):
             available_counter = self.find_unused_min_counter(obj)
             if available_counter:
