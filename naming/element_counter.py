@@ -118,7 +118,8 @@ class CounterInterface(ABC):
 
         # Add or transfer the source counter's value and reset the source counter.
         if self.value is not None:
-            self.add(source_counter.value_int)
+            # self.add(source_counter.value_int)
+            pass
         else:
             self.value = source_counter.value_int
         source_counter.value = None  # Reset the source counter.
