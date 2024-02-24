@@ -6,7 +6,7 @@ rename_settings = {
             "name": "prefix",  # キャプチャ用の名前 ユーザーが設定できるが重複は許されない
             "type": "text",
             "enabled": True,
-            "items": ["CTRL", "DEF", "MCH", "ORG", "DRV", "TRG"],
+            "items": ["CTRL", "DEF", "MCH", "ORG", "DRV", "TRG", "PROP"],
             "separator": "_",
         },
         {
@@ -14,27 +14,58 @@ rename_settings = {
             "name": "middle",
             "type": "text",
             "enabled": True,
-            "items": ["Bone", "Root", "Arm", "Leg", "Spine", "Hand", "Foot", "Head", "Finger", "Toe", "Tail"],
+            "items": [
+                "Bone", 
+                "Root", 
+                "Spine", 
+                "Chest",
+                "Torso", 
+                "Hips",
+                "Tail",
+                "Neck",
+                "Head", 
+                "Shoulder",
+                "Arm", 
+                "Elbow",
+                "ForeArm",
+                "Hand", 
+                "InHand", 
+                "Finger", 
+                "UpLeg",
+                "Leg", 
+                "Shin",
+                "Foot", 
+                "Knee",
+                "Toe", 
+            ],
             "separator": "_",
         },
         {
             "order": 3,
-            "name": "suffix",
+            "name": "finger",
             "type": "text",
             "enabled": True,
-            "items": ["Tweak", "Pole", "IK", "FK", "Roll", "Rot", "Loc", "Scale"],
+            "items": ["Thumb", "Index", "Middle", "Ring", "Pinky"],
             "separator": "_",
         },
         {
             "order": 4,
-            "name": "misc",
+            "name": "suffix",
             "type": "text",
             "enabled": True,
-            "items": ["int", "temp", "copy", "delete", "hide", "show", "hide_select", "show_select"],
+            "items": ["Base", "Tweak", "Pole", "IK", "FK", "Roll", "Rot", "Loc", "Scale"],
             "separator": "_",
         },
         {
             "order": 5,
+            "name": "misc",
+            "type": "text",
+            "enabled": True,
+            "items": ["INT", "temp", "copy", "delete", "hide", "show", "hide_select", "show_select"],
+            "separator": "_",
+        },
+        {
+            "order": 6,
             "name": "ez_counter",
             "type": "ez_counter",
             "enabled": True,
@@ -42,7 +73,7 @@ rename_settings = {
             "separator": "-",
         },
         {
-            "order": 6,
+            "order": 7,
             "name": "position",
             "type": "position",  # positionである必要がなくなった  
             # "type": "text",　# 否定 セパレーター込みで一つの要素として扱う必要がある 正規表現を見直す必要がある searchロジックでのセパレーターの扱いを見直す
@@ -52,7 +83,7 @@ rename_settings = {
         },
     ],
 }
-
+# TODO: 設定で一括で大文字にしたり、小文字にしたり、キャメルケースにしたりできるようにする
 
 # setting utils
 try: # Running in Blender

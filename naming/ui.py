@@ -43,6 +43,13 @@ class BONECRAFT_PT_rename_bone(bpy.types.Panel):
         row.separator()
 
         box = row.box()
+        box.label(text="Finger")
+        self.draw_section(box, bone_settings.get_item('finger').items, 'finger')
+        self.draw_delete_button(box, 'finger')
+
+        row.separator()
+
+        box = row.box()
         box.label(text="Position")
         self.draw_section(box, bone_settings.get_item('position').items, 'position')
         self.draw_delete_button(box, 'position')
@@ -70,15 +77,13 @@ class BONECRAFT_PT_rename_bone(bpy.types.Panel):
         del_button.operation = 'delete'
 
     def draw_section(self, box, items, target_part):
-        max_items = 5
+        max_items = 7
 
         num_col = len(items) // max_items
         # num_col = max(1, num_col)
         num_col = max(1, (len(items) + max_items - 1) // max_items)
 
-        # 列幅
-        # num_colの値が2以上のときは、増率に従って、列幅を広げる
-        scale_factor = 1.0 + (num_col - 1) * 0.2
+        scale_factor = 1.2
 
         col = box.column_flow(columns=num_col, align=False)
         col.scale_x = scale_factor
