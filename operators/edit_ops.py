@@ -36,12 +36,12 @@ class BONECRAFT_OT_ParentSet(ArmModeMixin, bpy.types.Operator):
             bpy.ops.armature.parent_set(type=self.parent_type)
         return {'FINISHED'}
 
-    def draw(self, context):
-        layout = self.layout
-        layout.prop(self, "parent_type", expand=True)
+    # def draw(self, context):
+    #     layout = self.layout
+    #     layout.prop(self, "parent_type", expand=True)
 
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self)
+    # def invoke(self, context, event):
+    #     return context.window_manager.invoke_props_dialog(self)
 
 
 class BONECRAFT_OT_ParentClear(ArmModeMixin, bpy.types.Operator):
