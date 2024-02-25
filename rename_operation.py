@@ -146,7 +146,7 @@ class EZRENAMER_OT_RenamePoseBones(bpy.types.Operator, ArmModeMixin):
             rnb.counter_operation()  # つなげると、counter_operationでnew_nameが更新されない?
             rnb.update_namespace()  # TODO: メソッドチェーンを考え直す必要がある
             
-            self.DBG_RENAME and log.info(f"{i + 1} / {len(rn_bones)}: {rnb.name} -> {rnb.new_name}")
+            self.DBG_RENAME and log.info(f"{i} / {len(rn_bones)}: {rnb.name} -> {rnb.new_name}")
         
         # TODO: 結果の確認パネルを表示する
         
