@@ -6,7 +6,15 @@ rename_settings = {
             "name": "prefix",  # キャプチャ用の名前 ユーザーが設定できるが重複は許されない
             "type": "text",
             "enabled": True,
-            "items": ["CTRL", "DEF", "MCH", "ORG", "DRV", "TRG", "PROP"],
+            "items": [
+                "CTRL", 
+                "DEF", 
+                "MCH", 
+                "ORG", 
+                "DRV", 
+                "TRG", 
+                "PROP",
+                ],
             "separator": "_",
         },
         {
@@ -53,7 +61,18 @@ rename_settings = {
             "name": "suffix",
             "type": "text",
             "enabled": True,
-            "items": ["Base", "Tweak", "Pole", "IK", "FK", "Roll", "Rot", "Loc", "Scale"],
+            "items": [
+                "Base", 
+                "Tweak", 
+                "Pole", 
+                "IK", 
+                "FK", 
+                "Roll", 
+                "Rot", 
+                "Loc", 
+                "Scale",
+                "INT",
+                ],
             "separator": "_",
         },
         {
@@ -61,7 +80,17 @@ rename_settings = {
             "name": "misc",
             "type": "text",
             "enabled": True,
-            "items": ["INT", "temp", "copy", "delete", "hide", "show", "hide_select", "show_select"],
+            "items": [
+                "int", 
+                "rot",
+                "temp", 
+                "copy", 
+                "delete", 
+                "hide", 
+                "show", 
+                "hide_select", 
+                "show_select"
+                ],
             "separator": "_",
         },
         {
