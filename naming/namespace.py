@@ -96,8 +96,8 @@ class NamespaceManager:
         namespace.update_name(old_name, new_name)
 
     def check_duplicate(self, obj: EditableObject, proposed_name):
-        # if obj.name == proposed_name:  # obj.nameはない。
-        #     return False  # 名前が変更されていない場合は、重複チェックを行わない
+        if obj.name == proposed_name:  # obj.nameはない。
+            return False  # 名前が変更されていない場合は、重複チェックを行わない
         namespace = self.get_namespace(obj)
         return proposed_name in namespace.names
 
