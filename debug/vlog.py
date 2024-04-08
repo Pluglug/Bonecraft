@@ -21,7 +21,8 @@ CONSOLE_COLOR_WHITE = '\033[37m'
 
 
 class VisualLog:
-    def __init__(self):  # , package_id):
+    def __init__(self):  #, package_id):
+        # self.package_id = package_id
         self.indent_level = 0
         self.inspect_enabled = False
         self.timer = None
@@ -95,6 +96,11 @@ class VisualLog:
         self.warn(*args)
         return self
 
+    def __call__(self, *args):
+        """Display the arguments in blue."""
+        self.info(*args)
+        return self
+
     @contextlib.contextmanager
     def indented(self):
         self.increase()
@@ -145,8 +151,11 @@ class VisualLog:
         self.timer = None
         return self
 
+    # @classmethod
+    # def get_instance(cls):
+    #     return cls()
 
-log = VisualLog()
+log = VisualLog()  # TODO: package_idを引数に渡す インスタンス生成を関数にする アドオンのinitで生成する
 
 
 # Usage:
