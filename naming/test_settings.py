@@ -53,7 +53,7 @@ rename_settings = {
             "name": "finger",
             "type": "text",
             "enabled": True,
-            "items": ["Thumb", "Index", "Middle", "Ring", "Pinky"],
+            "items": ["Finger", "Thumb", "Index", "Middle", "Ring", "Pinky"],
             "separator": "_",
         },
         {
