@@ -13,10 +13,9 @@ ADDON_PATH = os.path.normpath(os.path.dirname(os.path.abspath(__file__)))
 #     "prop"].parameters["icon"].enum_items
 
 
-def uprefs():
-    return getattr(bpy.context, "user_preferences", None) or \
-        getattr(bpy.context, "preferences", None)
+def uprefs(context=None):
+    context = context or bpy.context
+    return getattr(context, "preferences", None)
 
-
-def prefs():
-    return uprefs().addons[ADDON_ID].preferences
+def prefs(context=None):
+    return uprefs(context).addons[ADDON_ID].preferences
