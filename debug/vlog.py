@@ -1,64 +1,69 @@
+from enum import Enum
 import contextlib
+import traceback
 import inspect
 import time
 import os
 
-try:
-    from addon import ADDON_ID  # TODO: 削除 package_idにする
-except:
-    ADDON_ID = "MyAddon"
 
-ADDON_ID = "bonecraft"  # DBG
+class Color(Enum):
+    BLACK = 30
+    RED = 31
+    GREEN = 32
+    YELLOW = 33
+    BLUE = 34
+    MAGENTA = 35
+    CYAN = 36
+    WHITE = 37
+    BRIGHT_BLACK = 90
+    BRIGHT_RED = 91
+    BRIGHT_GREEN = 92
+    BRIGHT_YELLOW = 93
+    BRIGHT_BLUE = 94
+    BRIGHT_MAGENTA = 95
+    BRIGHT_CYAN = 96
+    BRIGHT_WHITE = 97
+    # Add 10 if using background colors
+    # ansi(Color.WHITE + 10)
 
-CONSOLE_COLOR_BLUE = '\033[34m'
-CONSOLE_COLOR_RED = '\033[31m'
-CONSOLE_COLOR_GREEN = '\033[1;32m'
-CONSOLE_COLOR_YELLOW = '\033[33m'
+class Style(Enum):
+    RESET = 0
+    BOLD = 1
+    FAINT = 2
+    ITALIC = 3
+    UNDERLINE = 4
+    INVERTED = 7
 
-CONSOLE_COLOR_LIGHT_BLUE = '\033[36m'
-CONSOLE_COLOR_PURPLE = '\033[35m'
-CONSOLE_COLOR_WHITE = '\033[37m'
+def ansi(*styles):
+    return '\033[{}m'.format(";".join(str(color.value) for color in styles))
 
 
-class VisualLog:
-    def __init__(self):  #, package_id):
-        # self.package_id = package_id
+class PrintLog:
+    def __init__(self):
         self.indent_level = 0
-        self.inspect_enabled = False
+        self.track_caller_location = False
+        self.use_colors = True
         self.timer = None
+        self.line_length = 50
 
-    def enable_inspect(self):  # フラグ名と混同しやすい
-        """Display the module name and line number of the caller."""
-        self.inspect_enabled = True
-
-    def disable_inspect(self):
-        """Disable inspect."""
-        self.inspect_enabled = False
-
-    def _get_caller_info(self):
-        if not self.inspect_enabled:
+    def _get_caller_location(self):
+        if not self.track_caller_location:
             return ""
 
-        frame = inspect.currentframe()
-        caller_frames = inspect.getouterframes(frame)
-        current_script = os.path.basename(__file__)
-
-        for outer_frame in caller_frames:
-            module_name = outer_frame.filename
-            if current_script not in module_name:
-                line_number = outer_frame.lineno
-                module_name = module_name if ADDON_ID in module_name else "Unknown module"
-                module_name = os.path.relpath(module_name, os.path.dirname(__file__))
-                return f"{module_name}:{line_number}: "
-        return "Unknown module: "
+        frame = traceback.extract_stack(None, 4)[0]  # Get caller's frame
+        module_name = frame.filename.split('\\')[-1]
+        return f"{module_name.ljust(10)}: {str(frame.lineno).ljust(4)} {frame.name.ljust(10)}: "
 
     def _log(self, color, *args):
-        caller_info = self._get_caller_info()
+        caller_info = self._get_caller_location()
         indent = "  " * self.indent_level
         msg = caller_info + indent + ", ".join(str(arg) for arg in args)
         msg = msg.replace("\n", "\n" + indent)
 
-        print(color + msg + '\033[0m')
+        if self.use_colors:
+            print(color + msg + ansi(Style.RESET))
+        else:
+            print(msg)
 
     def header(self, msg, title=None):
         """Green text indicating the start of a new operation."""
@@ -66,47 +71,83 @@ class VisualLog:
 
         if title is not None:
             title = str(title)
-            header_length = max(len(msg), len(title)+8)
+            header_length = max(len(msg), self.line_length)  # len(title)+8)
             title_text = title.center(header_length, '-')
-            self._log(CONSOLE_COLOR_GREEN, title_text)
+            self._log(ansi(Color.GREEN, Style.BOLD), title_text)
 
-        self._log(CONSOLE_COLOR_GREEN, msg)
+        if msg:
+            self._log(ansi(Color.GREEN, Style.BOLD), msg)
+
+        return self
+    
+    def footer(self, *args):
+        """Green text indicating the end of an operation."""
+        self.reset_indent()
+        self._log(ansi(Color.CYAN), *args)
+        self._log(ansi(Color.CYAN), "-" * self.line_length)
+        print("")
         return self
 
     def info(self, *args):
         """Blue text indicating the progress of an operation."""
-        self._log(CONSOLE_COLOR_BLUE, *args)
-        # TODO: tabを使うように見た目をそろえたい
-        # TODO: 2つ以上の引数を渡したときに、つぎの引数を改行、インデントして表示するようにしたい
+        self._log(ansi(Color.BLUE), *args)
+        return self
+
+    def info2(self, *args):
+        """Blue text indicating the progress of an operation."""
+        self._log(ansi(Color.CYAN), *args)
         return self
     
     def error(self, *args):
         """Red text indicating an error that is not fatal."""
-        self._log(CONSOLE_COLOR_RED, *args)
+        self._log(ansi(Color.RED), *args)
         return self
 
     def warn(self, *args):
         """Yellow text indicating a warning that is not fatal."""
-        self._log(CONSOLE_COLOR_YELLOW, *args)
-        self.error("warn() is deprecated. Use warning() instead.")
+        self._log(ansi(Color.YELLOW), *args)
         return self
 
-    def warning(self, *args):
-        """Yellow text indicating a warning that is not fatal."""
-        self.warn(*args)
-        return self
+    # def warning(self, *args):
+    #     self.warn(*args)
+    #     self.warn("warn() is recommended over warning().")
+    #     return self
 
     def __call__(self, *args):
         """Display the arguments in blue."""
         self.info(*args)
         return self
 
+    @staticmethod
+    def get_caller_info():
+        stack = inspect.stack()
+
+        # 0: get_caller_info, 1: log.get_caller_info, 2: caller
+        if len(stack) < 3:
+            return "Unknown caller"
+        
+        frame = stack[2]
+        frame_info = inspect.getframeinfo(frame[0])
+
+        return {
+            "filename": os.path.basename(frame_info.filename),
+            "lineno": frame_info.lineno,
+            "function": frame_info.function,
+            # "code_context": frame_info.code_context
+        }
+
+    # あんまり便利じゃない 
+    # `log(" " * len(path) + "/".join(path))`とかのほうがシンプルでよい
+    # デコレーターとして使えるなら便利かも
     @contextlib.contextmanager
     def indented(self):
+        # caller_function = inspect.stack()[2].function
         self.increase()
+        # self.header(f"Start {caller_function}")
         try:
             yield
         finally:
+            # self._log(CONSOLE_COLOR_CYAN, f"End {caller_function}")
             self.decrease()
 
     def indent(self, count=1):
@@ -129,9 +170,9 @@ class VisualLog:
         self.indent_level = 0
         return self
     
-    def start_timer(self, msg="Timer started.", title=None):
+    def start_timer(self, msg, title=None):
         """Timer start and call header()"""
-        self.header(msg, title)
+        self.header("Timer started: " + msg, title)
         self.timer = time.time()
         return self
 
@@ -142,7 +183,7 @@ class VisualLog:
             return self
 
         now = time.time()
-        self.info(f'{now - self.timer:.4f} sec', *args)
+        self._log(ansi(Color.GREEN), f'{now - self.timer:.4f} sec', *args)
         return self
     
     def stop_timer(self, msg="Timer stopped.", *args):
@@ -151,21 +192,44 @@ class VisualLog:
         self.timer = None
         return self
 
-    # @classmethod
-    # def get_instance(cls):
-    #     return cls()
 
-log = VisualLog()  # TODO: package_idを引数に渡す インスタンス生成を関数にする アドオンのinitで生成する
+log = PrintLog()
 
 
 # Usage:
 # log.header(msg)
 # log.info(*args)
 # log.error(*args)
-# log.warning(*args)
+# log.warn(*args)
 
-# Memo: Should consider indenting like this:
-# DBG_TREE and logi(" " * len(path) + "/".join(path))
+# TODO: 
+# __all__ = ["log"]
+# # __all__ += ["log_exec"]
+
+# # Collect all DBG_* flags
+# __all__ += [name for name in globals() if name.startswith("DBG")]
 
 if __name__ == "__main__":
-    pass
+    
+    def bar():
+        with log.indented():
+            log.info("This is a message from bar().")
+            foo()
+
+        log.info("This is a message from bar().")
+        foo()
+        log.warn("This is a warning message.")
+
+    def foo():
+        log.info("This is a message from foo().")
+        c = log.get_caller_info()
+        log.info(f"Caller info: {c}")
+
+    # log.header("Demo started.", "Demo Title")
+    log.start_timer("Demo started.", "Demo Title")
+    log.info("This is an information message.")
+    bar()
+    log.time("This is a message with elapsed time.")
+    log.error("This is an error message.")
+    log.stop_timer("Demo finished.")
+    log.footer("Demo finished.")
