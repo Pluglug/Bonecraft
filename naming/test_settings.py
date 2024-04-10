@@ -1,3 +1,10 @@
+# TODO: 設定で一括で大文字にしたり、小文字にしたり、キャメルケースにしたりできるようにする
+# pyright: reportInvalidTypeForm=false
+
+try: # Running in Blender
+    from ..debug import log, DBG_RENAME
+except:  # Running Test in VSCode
+    from debug import log, DBG_RENAME
 
 rename_settings = {
     "pose_bone": [
@@ -114,9 +121,6 @@ rename_settings = {
 }
 
 
-# TODO: 設定で一括で大文字にしたり、小文字にしたり、キャメルケースにしたりできるようにする
-# pyright: reportInvalidTypeForm=false
-
 import bpy
 
 
@@ -142,20 +146,78 @@ POSITION_ITEMS = [
     "L", "R", "Top", "Bot", "Fr", "Bk"
 ]
 
+RENAMABLE_OBJECTS = [
+    ('POSE_BONE', "Pose Bone", "Rename pose bones"),
+    # ('MATERIAL', "Material", "Rename materials"),  # 未実装
+    # ('OBJECT', "Object", "Rename objects"),
+    # ('SCENE', "Scene", "Rename scenes"),
+    # ('TEXTURE', "Texture", "Rename textures"),
+    # ('WORLD', "World", "Rename worlds"),
+]
+
+
+class ItemOption(bpy.types.PropertyGroup):
+    # このクラスはRenameElementSettings.itemsのために使用される
+    enabled: bpy.props.BoolProperty(name="Enabled", default=True)
+    option: bpy.props.StringProperty(name="Option")
+
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        layout.separator(factor=0.1)
+
+        layout.active = item.enabled
+        layout.prop(item, "enabled", text="", emboss=False,
+                 icon=ic_cb(item.enabled))
+
+        layout.separator(factor=0.1)
+
+        r = layout.row()
+        r.prop(item, "option", text="", emboss=False)
+
+        r.separator(factor=0.5)
 
 # リネーム設定の各要素を管理するプロパティグループ
-class RenameElementSetting(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty(name="Name")
-    type: bpy.props.StringProperty(name="Type")
+class RenameElementSettings(bpy.types.PropertyGroup):
     enabled: bpy.props.BoolProperty(name="Enabled", default=True)
+    name: bpy.props.StringProperty(name="Name")  # 重複避けるためにはgen_safe_name()が必要
+    type: bpy.props.EnumProperty(name="Type", items=NAMING_TYPE_ITEMS)
     separator: bpy.props.EnumProperty(name="Separator", items=SEPARATOR_ITEMS)
-    items: bpy.props.CollectionProperty(type=bpy.types.PropertyGroup)  # 各要素のアイテム
+    items: bpy.props.CollectionProperty(type=ItemOption)
     digits: bpy.props.IntProperty(name="Digits")  # ez_counter用
+
+    # def draw_item():
+    #     pass
+
+    def get_value(self, num):
+        if self.type in ["text", "position"]:
+            if num < len(self.items):
+                return self.items[num]
+            else:
+                log.error(f"Index out of range: {num}")
+                return None
+        elif self.type == "ez_counter":
+            return num
+        else:
+            log.error(f"Unknown type: {self.type}")
+            return None
 
 
 # リネーム設定を管理するプロパティグループ
-class RenameSetting(bpy.types.PropertyGroup):
-    pose_bone: bpy.props.CollectionProperty(type=RenameElementSetting)
+class RenameElementsSettings(bpy.types.PropertyGroup):
+    elements: bpy.props.CollectionProperty(type=RenameElementSettings)
+
+    def get_setting(self, setting_name):
+        return self.elements.get(setting_name)
+
+class TestPreferences(bpy.types.AddonPreferences):
+    bl_idname = __name__
+    renamable_object = bpy.props.EnumProperty(
+        items=RENAMABLE_OBJECTS,
+        name="Renamable Object",
+        description="Select the object to rename"
+    )
+    rename_settings: bpy.props.CollectionProperty(type=RenameElementsSettings)
+    elements_active_index: bpy.props.IntProperty()
+    items_active_index: bpy.props.IntProperty()  # for Element items
 
 
 class RENAME_UL_Element(bpy.types.UIList):
@@ -178,10 +240,6 @@ class RENAME_UL_Element(bpy.types.UIList):
 
         r.separator(factor=0.5)
     
-    def get_elemets(self, context):
-        scene = context.scene
-        setting = scene.rename_settings[scene.rename_settings_index]
-        return setting.pose_bone
 
 class RENAME_PT_Panel(bpy.types.Panel):
     bl_label = "Rename Settings"
@@ -221,99 +279,63 @@ class RENAME_PT_Panel(bpy.types.Panel):
 
             # itemsの編集UIを追加する
 
-RENAME_TARGET_ITEMS = [
-    ('POSE_BONE', "Pose Bone", "Rename pose bones"),
-]
+# -------------------------------------------------------------------
 
-bpy.types.Scene.rename_target = bpy.props.EnumProperty(
-    items=RENAME_TARGET_ITEMS,
-    name="Rename Target",
-    description="Select the rename target"
-)
-bpy.types.Scene.rename_settings = bpy.props.CollectionProperty(type=RenameSettingGroup)
-bpy.types.Scene.rename_settings_index = bpy.props.IntProperty()
+# setting utils
 
+class Item:
+    def __init__(self, item_data):
+        self.name = item_data.get("name")
+        self.type = item_data.get("type")
+        self.enabled = item_data.get("enabled")
+        self.items = item_data.get("items", [])
+        self.digits = item_data.get("digits", 0)
+        self.separator = item_data.get("separator", "")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# # setting utils
-# try: # Running in Blender
-#     from ..debug import log, DBG_RENAME
-# except:  # Running Test in VSCode
-#     from debug import log, DBG_RENAME
-# class Item:
-#     def __init__(self, item_data):
-#         self.name = item_data.get("name")
-#         self.type = item_data.get("type")
-#         self.enabled = item_data.get("enabled")
-#         self.items = item_data.get("items", [])
-#         self.digits = item_data.get("digits", 0)
-#         self.separator = item_data.get("separator", "")
-
-#     def get_value(self, num):
-#         if self.type in ["text", "position"]:
-#             if num < len(self.items):
-#                 return self.items[num]
-#             else:
-#                 log.error(f"Index out of range: {num}")
-#                 return None
-#         elif self.type == "ez_counter":
-#             # return f"{num:0{self.digits}d}"
-#             return num
-#         else:
-#             log.error(f"Unknown type: {self.type}")
-#             return None
+    def get_value(self, num):
+        if self.type in ["text", "position"]:
+            if num < len(self.items):
+                return self.items[num]
+            else:
+                log.error(f"Index out of range: {num}")
+                return None
+        elif self.type == "ez_counter":
+            # return f"{num:0{self.digits}d}"
+            return num
+        else:
+            log.error(f"Unknown type: {self.type}")
+            return None
     
-#     def len_items(self):
-#         return len(self.items)
+    def len_items(self):
+        return len(self.items)
 
 
-# class Setting:
-#     def __init__(self, setting_data):
-#         self.items = {item["name"]: Item(item) for item in setting_data}
+class Setting:
+    def __init__(self, setting_data):
+        self.items = {item["name"]: Item(item) for item in setting_data}
 
-#     def get_item(self, item_name):  # FIXME: Setting.items.itemsになっちゃう
-#         return self.items.get(item_name)
-
-
-# class SettingUtils:
-#     def __init__(self, settings_data):
-#         self.settings = {name: Setting(setting) for name, setting in settings_data.items()}
-
-#     def get_setting(self, setting_name):
-#         return self.settings.get(setting_name)
+    def get_item(self, item_name):  # FIXME: Setting.items.itemsになっちゃう
+        return self.items.get(item_name)
 
 
-# setting_utils = SettingUtils(rename_settings)
+class SettingUtils:
+    def __init__(self, settings_data):
+        self.settings = {name: Setting(setting) for name, setting in settings_data.items()}
+
+    def get_setting(self, setting_name):
+        return self.settings.get(setting_name)
 
 
-# if __name__ == "__main__":
-#     # testing
-#     pose_bone_setting = setting_utils.get_setting("pose_bone")
+setting_utils = SettingUtils(rename_settings)
 
-#     tgt_name = "prefix"
-#     tgt_num = 1
 
-#     r = pose_bone_setting.get_item(tgt_name)  # .get_value(tgt_num)
-#     print(type(r.items))
+if __name__ == "__main__":
+    # testing
+    pose_bone_setting = setting_utils.get_setting("pose_bone")
+
+    tgt_name = "prefix"
+    tgt_num = 1
+
+    r = pose_bone_setting.get_item(tgt_name)  # .get_value(tgt_num)
+    print(type(r.items))
     
