@@ -77,7 +77,8 @@ class NamingElement(ABC):
     
     @property
     def name(self):
-        log.warning("name has been deprecated. Use id instead.")
+        caller = log.get_caller_info()
+        log.warning("name has been deprecated. Use id instead. Called by: " + caller.filename + " at line " + str(caller.lineno))
         return self.id
 
     @property
