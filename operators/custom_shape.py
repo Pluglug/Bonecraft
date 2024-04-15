@@ -9,33 +9,27 @@ MESH_SHAPE = {
     'ICOSphere': {'primitive_ico_sphere_add': {'radius': 0.5, 'subdivisions': 1}},
 }
 
-def create_mesh_shape(shape='Plane', **kwargs):
+def create_mesh_shape(shape='Circle', **kwargs):
     if shape in MESH_SHAPE:
         ops_func = getattr(bpy.ops.mesh, list(MESH_SHAPE[shape].keys())[0])
         ops_func(**MESH_SHAPE[shape][list(MESH_SHAPE[shape].keys())[0]], **kwargs)
     else:
         raise ValueError(f"Invalid shape: {shape}")
 
-def edit_custom_shape(): # (self, context):
-    context = bpy.context
-    armature = context.active_object
-    # Operator Poll
-    if armature.type != 'ARMATURE' or context.mode != 'POSE' \
-            or len(context.selected_pose_bones) != 1:
-        return
-    
+def edit_custom_shape(self, context):
+    # Polled by BONECRAFT_OT_CreateCustomShape
+    armature = context.active_object    
     p_bone = context.active_pose_bone
 
-    # Retrieved from operator properties and add-on preferences
-    new_shape_type = 'Circle'  
+    if self.set_cursor_to_bone_head:
+        copy_bone_head_rotation_to_cursor(armature, p_bone)
 
-    create_mesh_shape(new_shape_type, rotation=(1.5708, 0, 0))  # Y-UP
-
-    # Apply Y-UP rotation
+    # Create new mesh object and apply Y-up rotation
+    create_mesh_shape(self.new_shape_type, rotation=(1.5708, 0, 0))
     bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
 
     mesh_obj = context.active_object
-    mesh_obj.name = f"cs_user_{p_bone.name}"
+    mesh_obj.name = f"cs_{p_bone.name}"
 
     # TODO: 存在確認を一度に行い、ロジックを簡略化
     if not p_bone.custom_shape:
@@ -74,9 +68,9 @@ def edit_custom_shape(): # (self, context):
     # MeshEditモードへの切り替え
     bpy.ops.object.mode_set(mode='EDIT')
     # フェイス削除
-    bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.mesh.delete(type='ONLY_FACE')
-    
+    if self.delete_faces:
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.delete(type='ONLY_FACE')
     
     bpy.ops.mesh.select_mode(type='VERT')
     bpy.ops.mesh.select_all(action='SELECT')
@@ -128,19 +122,100 @@ def gen_post_shape_edit_handler(target_obj):
 
             if current_obj != target_obj or current_mode != 'EDIT_MESH':
                 if current_obj.type == 'MESH' and current_mode == 'OBJECT':
-                    Log.info("Move from Edit to Object mode.")
+                    # Log.info("Move from Edit to Object mode.")
                     hide(target_obj)
                     reselect_linked_bone(target_obj)
                 elif current_obj.type == 'ARMATURE' and current_mode == 'POSE':
-                    Log.info("Move from Edit to Pose mode.")
+                    # Log.info("Move from Edit to Pose mode.")
                     hide(target_obj)
                 else:
                     print(f"Exceptional state: {current_obj.name} is in {current_mode} mode.")
 
                 if handler in bpy.app.handlers.depsgraph_update_post:
                     bpy.app.handlers.depsgraph_update_post.remove(handler)
-                    Log.footer(title="hide_custom_shape_on_mode_change Stopped.")
+                    # Log.footer(title="hide_custom_shape_on_mode_change Stopped.")
         except Exception as e:
             print(f"Error occurred: {e}")
             bpy.app.handlers.depsgraph_update_post.remove(handler)
     return handler
+
+
+
+# ポーズモードの選択されたボーンを取得
+# def get_selected_pose_bone():
+#     obj = bpy.context.active_object
+#     if obj and obj.type == 'ARMATURE' and obj.mode == 'POSE':
+#         selected_bones = [bone for bone in obj.pose.bones if bone.bone.select]
+#         if len(selected_bones) == 1:
+#             return selected_bones[0]
+#     return None
+
+# 3DカーソルにボーンのHeadの座標と回転を設定
+def copy_bone_head_rotation_to_cursor(armature, bone):
+    cursor = bpy.context.scene.cursor
+    # ワールド座標系にボーンのHeadを変換
+    world_head = armature.matrix_world @ bone.head
+    cursor.location = world_head
+    # ボーンの回転をクォータニオンとして取得し、カーソルの回転に設定
+    world_rotation = armature.matrix_world.to_3x3() @ bone.matrix.to_3x3()
+    cursor.rotation_mode = 'QUATERNION'
+    cursor.rotation_quaternion = world_rotation.to_quaternion()
+
+
+
+class BONECRAFT_OT_CreateCustomShape(bpy.types.Operator):
+    bl_idname = "bonecraft.edit_custom_shape"
+    bl_label = "Create Custom Shape(Press Alt for options)"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    new_shape_type: bpy.props.EnumProperty(
+        name="New Shape",
+        items=[(shape, shape, shape) for shape in MESH_SHAPE.keys()],
+        default='Circle'
+    )
+    delete_faces: bpy.props.BoolProperty(
+        name="Delete Faces",
+        default=True
+    )
+    set_cursor_to_bone_head: bpy.props.BoolProperty(
+        name="Set Cursor to Bone Head",
+        default=True
+    )
+
+    @classmethod
+    def poll(cls, context):
+        ao = context.active_object
+        if ao and ao.type == 'ARMATURE' and context.mode == 'POSE' \
+            and len(context.selected_pose_bones) == 1:
+            return True
+
+    def execute(self, context):
+        try:
+            edit_custom_shape(self, context)
+        except Exception as e:
+            self.report({'ERROR'}, f"Error occurred: {str(e)}")
+            return {'CANCELLED'}
+        return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        if event.alt:
+            return context.window_manager.invoke_props_dialog(self)
+        return self.execute(context)
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_decorate = False
+        layout.use_property_split = True
+
+        if not context.active_pose_bone.custom_shape:    
+            layout.label(text="Shape Type:")
+            row = layout.row(align=True)
+            row.prop(self, 'new_shape_type', expand=True)
+
+        col = layout.column(heading="Edit Options")
+        col.prop(self, 'delete_faces', text="Delete Faces")
+        col.prop(self, 'set_cursor_to_bone_head', text="Set Cursor to Bone Head")
+
+operator_classes = [
+    BONECRAFT_OT_CreateCustomShape,
+]
