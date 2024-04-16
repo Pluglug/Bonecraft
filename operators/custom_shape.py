@@ -1,4 +1,6 @@
 import bpy
+from mathutils import Matrix, Euler
+
 from ..debug import log as Log
 
 MESH_SHAPE = {
@@ -57,7 +59,6 @@ def edit_custom_shape(self, context):
         base_matrix = armature.matrix_world @ p_bone.matrix
 
     # トランスフォームオフセット
-    from mathutils import Matrix, Euler
     translation_matrix = Matrix.Translation(p_bone.custom_shape_translation)
     rotation_matrix = Euler(p_bone.custom_shape_rotation_euler).to_matrix().to_4x4()
     mesh_obj.matrix_world = armature.matrix_world @ base_matrix @ translation_matrix @ rotation_matrix
@@ -83,23 +84,65 @@ def edit_custom_shape(self, context):
     Log.header("hide_custom_shape_on_mode_change Started.", title="Handler")
 
 
-# def hide_custom_shape_on_mode_change(scene, depsgraph):
-#     active_obj = bpy.context.active_object
-#     if active_obj and active_obj.type == 'MESH' and bpy.context.object.mode == 'OBJECT':
-#         # オブジェクトを非表示に設定
-#         active_obj.hide_viewport = True
-#         active_obj.hide_render = True
-        
-#         # 再選択
-#         if active_obj.get('linked_armature', None):
-#             armature = bpy.data.objects.get(active_obj['linked_armature'])
-#             if armature:
-#                 bpy.context.view_layer.objects.active = armature
-#                 bpy.ops.object.mode_set(mode='POSE')
-#                 bone = armature.pose.bones.get(active_obj['linked_bone'])
-#                 if bone:
-#                     bone.bone.select = True
-#         bpy.app.handlers.depsgraph_update_post.remove(hide_custom_shape_on_mode_change)
+def edit_custom_shape_for_selected_bones(self, context):
+    armature = context.active_object
+    a_bone = context.active_pose_bone
+    s_bones = [bone for bone in context.selected_pose_bones if bone != a_bone]
+
+    if not s_bones:
+        Log.info("Only one bone is selected.")
+        edit_custom_shape(self, context)
+        return
+
+    if self.set_cursor_to_bone_head:
+        copy_bone_head_rotation_to_cursor(armature, a_bone)
+
+    # Create new mesh object and apply Y-up rotation
+    create_mesh_shape(self.new_shape_type, rotation=(1.5708, 0, 0))
+    bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
+
+    mesh_obj = context.active_object
+    mesh_obj.name = f"cs_{a_bone.name}"
+
+    if not a_bone.custom_shape:
+        a_bone.custom_shape = mesh_obj
+    else:
+        if a_bone.custom_shape.name == mesh_obj.name:
+            mesh_obj.data = a_bone.custom_shape.data
+        else:
+            mesh_obj.data = a_bone.custom_shape.data.copy()
+            a_bone.custom_shape = mesh_obj
+
+    for bone in s_bones:
+        # if not bone.custom_shape:
+        bone.custom_shape = mesh_obj
+
+    mesh_obj['linked_armature'] = armature.name
+    mesh_obj['linked_bone'] = a_bone.name
+
+    if (t := a_bone.custom_shape_transform) is not None:
+        base_matrix = armature.matrix_world @ t.matrix
+    else:
+        base_matrix = armature.matrix_world @ a_bone.matrix
+
+    translation_matrix = Matrix.Translation(a_bone.custom_shape_translation)
+    rotation_matrix = Euler(a_bone.custom_shape_rotation_euler).to_matrix().to_4x4()
+    mesh_obj.matrix_world = armature.matrix_world @ base_matrix @ translation_matrix @ rotation_matrix
+
+    mesh_obj.scale *= a_bone.custom_shape_scale_xyz
+    mesh_obj.scale *= a_bone.length if a_bone.use_custom_shape_bone_size else 1.0
+
+    bpy.ops.object.mode_set(mode='EDIT')
+
+    if self.delete_faces:
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.delete(type='ONLY_FACE')
+
+    bpy.ops.mesh.select_mode(type='VERT')
+    bpy.ops.mesh.select_all(action='SELECT')
+
+    bpy.app.handlers.depsgraph_update_post.append(gen_post_shape_edit_handler(mesh_obj))
+    Log.header("hide_custom_shape_on_mode_change Started.", title="Handler")
 
 
 def gen_post_shape_edit_handler(target_obj):
@@ -185,13 +228,16 @@ class BONECRAFT_OT_CreateCustomShape(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         ao = context.active_object
-        if ao and ao.type == 'ARMATURE' and context.mode == 'POSE' \
-            and len(context.selected_pose_bones) == 1:
+        if ao and ao.type == 'ARMATURE' and context.mode == 'POSE':
+            # and len(context.selected_pose_bones) == 1:
             return True
 
     def execute(self, context):
         try:
-            edit_custom_shape(self, context)
+            # Undo Push
+            bpy.ops.ed.undo_push(message="Create Custom Shape")
+            # edit_custom_shape(self, context)
+            edit_custom_shape_for_selected_bones(self, context)
         except Exception as e:
             self.report({'ERROR'}, f"Error occurred: {str(e)}")
             return {'CANCELLED'}
