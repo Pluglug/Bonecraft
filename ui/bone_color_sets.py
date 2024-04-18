@@ -1,49 +1,97 @@
 import bpy
-from bpy.types import (
-    Context,
-    PropertyGroup, 
-    Panel, 
-    UIList,
-    Operator, 
-    WindowManager,
-)
+
+bl_info = {
+    "name": "Bone Color Presets",
+    "description": "Addon to save and load custom bone color presets.",
+    "author": "Pluglug",
+    "version": (0, 0, 2),
+    "blender": (2, 9, 0),
+    "location": "Preferences > Themes > Bone Color Sets",
+    "warning": "This addon is still in development.",
+    "wiki_url": "",
+    "category": "Preferences",
+}
+
+
+from bpy.types import PropertyGroup, UIList, Operator
 from bpy.props import (
     FloatVectorProperty,
     BoolProperty,
     IntProperty,
     StringProperty,
     CollectionProperty,
-    PointerProperty,
 )
 
 from bl_ui.space_userpref import USERPREF_PT_theme_bone_color_sets
 
 
+# from ..addon import get_user_preferences, get_addon_preferences
+ADDON_ID = __name__
+DBG_INIT = True
+
+def get_user_preferences(context=bpy.context):
+    preferences = getattr(context, "preferences", None)
+    if preferences is not None:
+        return preferences
+    else:
+        raise AttributeError("Unable to access preferences")
+
+def get_addon_preferences(context=bpy.context):
+    user_prefs = get_user_preferences(context)
+    addon_prefs = user_prefs.addons.get(ADDON_ID)
+    if addon_prefs is not None:
+        return addon_prefs.preferences
+    else:
+        raise KeyError(f"Addon '{ADDON_ID}' not found. Ensure it is installed and enabled.")
+
+
+def _log(color, *args):
+    msg = ""
+    for arg in args:
+        if msg:
+            msg += ", "
+        msg += str(arg)
+    print(color + msg + '\033[0m')
+
+def logi(*args):
+    _log('\033[34m', *args)
+
+def loge(*args):
+    _log('\033[31m', *args)
+
+def logh(msg):
+    _log('\033[1;32m', "")
+    _log('\033[1;32m', msg)
+
+def logw(*args):
+    _log('\033[33m', *args)
+
+
 # Bone Color Setsだけのプリセットを作成、保存、読み込みするアドオンを作成する
 
 class CustomBoneColorSet(PropertyGroup):
-    normal = FloatVectorProperty(
+    normal: FloatVectorProperty(
         name="Normal",
         subtype='COLOR',
         size=3,
         min=0.0, max=1.0,
         description="Color for normal state"
     )
-    select = FloatVectorProperty(
+    select: FloatVectorProperty(
         name="Select",
         subtype='COLOR',
         size=3,
         min=0.0, max=1.0,
         description="Color for selected state"
     )
-    active = FloatVectorProperty(
+    active: FloatVectorProperty(
         name="Active",
         subtype='COLOR',
         size=3,
         min=0.0, max=1.0,
         description="Color for active state"
     )
-    show_colored_constraints = BoolProperty(
+    show_colored_constraints: BoolProperty(
         name="Show Colored Constraints",
         description="Whether to show constraints with color",
         default=False
@@ -72,28 +120,21 @@ class CustomBoneColorSet(PropertyGroup):
 
 
 class CustomBoneColorSets(PropertyGroup):
-    color_sets = CollectionProperty(type=CustomBoneColorSet)
-    name = StringProperty(default="Custom Bone Color Sets")
-    active_bone_color_set_index = IntProperty(default=0)
+    color_sets: CollectionProperty(type=CustomBoneColorSet)
+    name: StringProperty(default="Custom Bone Color Sets")
 
-    def add_preset(self, theme):
+    def add_color_sets(self, theme):
         """Add a new color set preset and initialize it from the given theme."""
-        new_preset = self.color_sets.add()
-        new_preset.name = f"Preset {len(self.color_sets)}"
+        self.name = f"Preset {len(self.color_sets)}"
         for theme_set in theme.bone_color_sets:
-            preset_set = new_preset.color_sets.add()
+            preset_set = self.color_sets.add()
             preset_set.copy_from(theme_set)
-        return new_preset
+        return self
 
-    def restore_preset(self, context, index):
+    def restore_color_sets(self, theme):
         """Restore the given preset to the theme."""
-        theme = context.preferences.themes[0]
-        preset = self.color_sets[index]
-        for theme_set, preset_set in zip(theme.bone_color_sets, preset.color_sets):
+        for theme_set, preset_set in zip(theme.bone_color_sets, self.color_sets):
             theme_set.copy_from(preset_set)
-
-    def remove_preset(self, index):
-        self.color_sets.remove(index)
 
     def save_to_file(self, filepath):
         """Save presets to a file."""
@@ -130,7 +171,7 @@ class BONECOLOR_OT_save_preset(Operator):
 
     @classmethod
     def poll(cls, context):
-        theme = context.preferences.themes[0]
+        theme = get_user_preferences(context).themes[0]
         return hasattr(theme, "bone_color_sets")
 
     def execute(self, context):
@@ -138,14 +179,14 @@ class BONECOLOR_OT_save_preset(Operator):
             return self.save_preset(context)
         except Exception as e:
             self.report({'ERROR'}, f"Failed to save new bone color preset: {e}")
+            print(">>>", e)
             return {'CANCELLED'}
 
     def save_preset(self, context):
-        theme = context.preferences.themes[0]
-        wm = context.window_manager
-
-        new_preset = wm.bone_color_sets.add_preset(theme)
-        # wm.active_bone_color_set_index = len(wm.bone_color_sets) - 1
+        theme = get_user_preferences(context).themes[0]
+        prefs = get_addon_preferences(context)
+        
+        new_preset = prefs.add_bcs_preset(theme)
 
         self.report({'INFO'}, f"New bone color preset saved: {new_preset.name}")
         return {'FINISHED'}
@@ -159,8 +200,8 @@ class BONECOLOR_OT_load_preset(Operator):
 
     @classmethod
     def poll(cls, context):
-        wm = context.window_manager
-        return wm.active_bone_color_set_index >= 0
+        prefs = get_addon_preferences(context)
+        return prefs.active_bcs_preset_index >= 0
 
     def execute(self, context):
         try:
@@ -170,12 +211,14 @@ class BONECOLOR_OT_load_preset(Operator):
             return {'CANCELLED'}
 
     def load_preset(self, context):
-        wm = context.window_manager
-        wm.bone_color_sets.restore_preset(context, wm.active_bone_color_set_index)
-
-        self.report({'INFO'}, f"Loaded bone color preset: {wm.bone_color_sets[wm.active_bone_color_set_index].name}")
-        return {'FINISHED'}
-
+        theme = get_user_preferences(context).themes[0]
+        prefs = get_addon_preferences(context)
+        if prefs.restore_bcs_preset(theme):
+            self.report({'INFO'}, f"Loaded bone color preset: {prefs.bcs_presets[prefs.active_bcs_preset_index].name}")
+            return {'FINISHED'}
+        else:
+            self.report({'ERROR'}, f"Failed to load bone color preset")
+            return {'CANCELLED'}  # ハンドリング過多?
 
 
 class BONECOLOR_OT_remove_preset(Operator):
@@ -186,8 +229,8 @@ class BONECOLOR_OT_remove_preset(Operator):
 
     @classmethod
     def poll(cls, context):
-        wm = context.window_manager
-        return wm.active_bone_color_set_index >= 0
+        prefs = get_addon_preferences(context)
+        return prefs.active_bcs_preset_index >= 0
 
     def execute(self, context):
         try:
@@ -197,104 +240,82 @@ class BONECOLOR_OT_remove_preset(Operator):
             return {'CANCELLED'}
 
     def remove_preset(self, context):
-        wm = context.window_manager
-        target_index = wm.active_bone_color_set_index
-        target_name = wm.bone_color_sets[target_index].name
-
-        wm.bone_color_sets.remove_preset(target_index)
-        wm.active_bone_color_set_index = max(0, wm.active_bone_color_set_index - 1)
-
-        self.report({'INFO'}, f"Removed bone color preset: {target_name}")
-        return {'FINISHED'}
+        prefs = get_addon_preferences(context)
+        prefs.remove_bcs_preset()
 
 
-class USERPREF_PT_custom_bone_color_sets(Panel):
-    bl_label = "Custom Bone Color Sets"
-    bl_options = {'DEFAULT_CLOSED'}
-    bl_space_type = 'PREFERENCES'  # 'USER_PREFERENCES'は古い
-    bl_region_type = 'WINDOW'
+def _draw_presets(self, context):
+    prefs = get_addon_preferences(context)
 
-    def draw(self, context):
-        layout = self.layout
-        wm = context.window_manager
+    layout = self.layout
+    box = layout.box()
 
-        if not wm.bone_color_sets:
-            wm.bone_color_sets = bpy.data.window_managers[0].bone_color_sets
+    box.label(text="Bone Color Presets", icon='PRESET_NEW')
 
-        layout.template_list("BONECOLOR_UL_presets_bone_color_sets", "BONECOLOR_UL_presets_bone_color_sets", 
-                            wm.bone_color_sets, "color_sets", 
-                            wm.bone_color_sets, "active_bone_color_set_index")
+    box.template_list("BONECOLOR_UL_presets_bone_color_sets", "", 
+                         prefs, "bcs_presets", prefs, "active_bcs_preset_index")
 
-        row = layout.row()
-        row.operator("bonecolor.save_preset", icon='EXPORT', text="Save Preset")
+    row = box.row()
+    row.operator("bonecolor.save_preset", icon='EXPORT', text="Save Preset")
 
-        if wm.active_bone_color_set_index >= 0:
-            row.operator("bonecolor.remove_preset", icon='TRASH', text="Remove Preset")
-            row.operator("bonecolor.load_preset", icon='IMPORT', text="Load Preset")
+    if prefs.active_bcs_preset_index >= 0:
+        row.operator("bonecolor.remove_preset", icon='TRASH', text="Remove Preset")
+        row.operator("bonecolor.load_preset", icon='IMPORT', text="Load Preset")
 
-        layout.separator()
+    layout.separator()
 
+# EXTENDED_PANELS
+
+class BCSPreferences(bpy.types.AddonPreferences):
+    bl_idname = __name__
+
+    bcs_presets: CollectionProperty(type=CustomBoneColorSet)
+    active_bcs_preset_index: IntProperty(default=0)
+
+    def add_bcs_preset(self, theme: bpy.types.Theme) -> CustomBoneColorSets:
+        preset = self.bcs_presets.add()
+        preset.add_color_sets(theme)
+        self.active_bcs_preset_index = len(self.bcs_presets) - 1
+        return preset
+
+    def restore_bcs_preset(self, theme: bpy.types.Theme) -> bool:
+        try:
+            self.bcs_presets[self.active_bcs_preset_index].restore_color_sets(theme)
+            return True
+        except IndexError as e:
+            print(">>>", e)
+            return False
+        
+    def remove_bcs_preset(self):
+        self.bcs_presets.remove(self.active_bcs_preset_index)
 
 
 classes = (
     CustomBoneColorSet,
     CustomBoneColorSets,
-    # BoneColorSetPreset,
     BONECOLOR_UL_presets_bone_color_sets,
     BONECOLOR_OT_save_preset,
     BONECOLOR_OT_load_preset,
     BONECOLOR_OT_remove_preset,
-    USERPREF_PT_custom_bone_color_sets,
+    BCSPreferences,
 )
 
+
 def register():
+    logh("Registering bone_color_sets.py")
     from bpy.utils import register_class
     for cls in classes:
+        logi(f"  Registering {cls.__name__}")
         register_class(cls)
-    
-    WindowManager.bone_color_sets = PointerProperty(type=CustomBoneColorSets)
-    WindowManager.active_bone_color_set_index = IntProperty(default=0)
-    USERPREF_PT_theme_bone_color_sets.prepend(USERPREF_PT_custom_bone_color_sets.draw)
+
+    USERPREF_PT_theme_bone_color_sets.prepend(_draw_presets)
+
 
 def unregister():
+    logh("Unregistering bone_color_sets.py")
     from bpy.utils import unregister_class
     for cls in reversed(classes):
+        logi(f"  Unregistering {cls.__name__}")
         unregister_class(cls)
-
-    USERPREF_PT_theme_bone_color_sets.remove(USERPREF_PT_custom_bone_color_sets.draw)
-    del WindowManager.active_bone_color_set_index
-    del WindowManager.bone_color_sets
-
-register()
-
-
-
-
-
-
-
-
-# # Reference
-# class USERPREF_PT_theme_bone_color_sets(ThemePanel, CenterAlignMixIn, Panel):
-#     bl_label = "Bone Color Sets"
-#     bl_options = {'DEFAULT_CLOSED'}
-
-#     def draw_header(self, _context):
-#         layout = self.layout
-
-#         layout.label(icon='COLOR')
-
-#     def draw_centered(self, context, layout):
-#         theme = context.preferences.themes[0]
-
-#         layout.use_property_split = True
-
-#         for i, ui in enumerate(theme.bone_color_sets, 1):
-#             layout.label(text=iface_("Color Set %d") % i, translate=False)
-
-#             flow = layout.grid_flow(row_major=False, columns=0, even_columns=True, even_rows=False, align=True)
-
-#             flow.prop(ui, "normal")
-#             flow.prop(ui, "select", text="Selected")
-#             flow.prop(ui, "active")
-#             flow.prop(ui, "show_colored_constraints")
+    
+    USERPREF_PT_theme_bone_color_sets.remove(_draw_presets)
