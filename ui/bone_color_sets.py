@@ -103,6 +103,13 @@ class CustomBoneColorSet(PropertyGroup):
         self.select = other.select[:]
         self.active = other.active[:]
         self.show_colored_constraints = other.show_colored_constraints
+    
+    def copy_to(self, other):
+        """Copy color settings to another CustomBoneColorSet."""
+        other.normal = self.normal[:]
+        other.select = self.select[:]
+        other.active = self.active[:]
+        other.show_colored_constraints = self.show_colored_constraints
 
     def as_dict(self):
         return {
@@ -134,7 +141,7 @@ class CustomBoneColorSets(PropertyGroup):
     def restore_color_sets(self, theme):
         """Restore the given preset to the theme."""
         for theme_set, preset_set in zip(theme.bone_color_sets, self.color_sets):
-            theme_set.copy_from(preset_set)
+            preset_set.copy_to(theme_set)
 
     def save_to_file(self, filepath):
         """Save presets to a file."""
@@ -242,6 +249,7 @@ class BONECOLOR_OT_remove_preset(Operator):
     def remove_preset(self, context):
         prefs = get_addon_preferences(context)
         prefs.remove_bcs_preset()
+        return {'FINISHED'}
 
 
 def _draw_presets(self, context):
@@ -269,7 +277,7 @@ def _draw_presets(self, context):
 class BCSPreferences(bpy.types.AddonPreferences):
     bl_idname = __name__
 
-    bcs_presets: CollectionProperty(type=CustomBoneColorSet)
+    bcs_presets: CollectionProperty(type=CustomBoneColorSets)
     active_bcs_preset_index: IntProperty(default=0)
 
     def add_bcs_preset(self, theme: bpy.types.Theme) -> CustomBoneColorSets:
