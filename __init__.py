@@ -39,7 +39,7 @@ addon.VERSION = bl_info["version"]
 addon.BL_VERSION = bl_info["blender"]
 
 
-from . operators import edit_ops, custom_shape
+from . operators import edit_ops, custom_shape, mode_toggle
 # from . import naming_base
 from . import rename_operation
 from . import naming
@@ -47,6 +47,7 @@ from . import naming
 classes = []
 classes.extend(edit_ops.operator_classes)
 classes.extend(custom_shape.operator_classes)
+classes.extend(mode_toggle.operator_classes)
 # classes.extend(naming_base.operator_classes)
 classes.extend(rename_operation.operator_classes)
 classes.extend(naming.panel_classes)
