@@ -19,7 +19,7 @@ class BONECRAFT_PT_rename_bone(bpy.types.Panel):
         row = layout.row(align=True)
 
         box = row.box()
-        box.label(text="Prefix")
+        box.label(text="Prefix", translate=False)
         # self.draw_section(box, rename_preset['prefix'], 'prefix')
         self.draw_section(box, bone_settings.get_item('prefix').items, 'prefix')
         self.draw_delete_button(box, 'prefix')
@@ -27,7 +27,7 @@ class BONECRAFT_PT_rename_bone(bpy.types.Panel):
         row.separator()
 
         box = row.box()
-        box.label(text="Middle")
+        box.label(text="Middle", translate=False)
         # self.draw_section(box, rename_preset['middle'], 'middle')
         self.draw_section(box, bone_settings.get_item('middle').items, 'middle')
         self.draw_delete_button(box, 'middle')
@@ -35,7 +35,7 @@ class BONECRAFT_PT_rename_bone(bpy.types.Panel):
         row.separator()
 
         box = row.box()
-        box.label(text="Suffix")
+        box.label(text="Suffix", translate=False)
         # self.draw_section(box, rename_preset['suffix'], 'suffix')
         self.draw_section(box, bone_settings.get_item('suffix').items, 'suffix')
         self.draw_delete_button(box, 'suffix')
@@ -43,28 +43,28 @@ class BONECRAFT_PT_rename_bone(bpy.types.Panel):
         row.separator()
 
         box = row.box()
-        box.label(text="Finger")
+        box.label(text="Finger", translate=False)
         self.draw_section(box, bone_settings.get_item('finger').items, 'finger')
         self.draw_delete_button(box, 'finger')
 
         row.separator()
 
         box = row.box()
-        box.label(text="Position")
+        box.label(text="Position", translate=False)
         self.draw_section(box, bone_settings.get_item('position').items, 'position')
         self.draw_delete_button(box, 'position')
 
         row.separator()
 
         box = row.box()
-        box.label(text="Misc")
+        box.label(text="Misc", translate=False)
         self.draw_section(box, bone_settings.get_item('misc').items, 'misc')
         self.draw_delete_button(box, 'misc')
 
         row.separator()
 
         box = row.box()
-        box.label(text="Counter")
+        box.label(text="Counter", translate=False)
         counter_items = [f"{i:02}" for i in range(1, 11)]
         self.draw_section(box, counter_items, 'ez_counter')
         # ops = box.operator("ezrenamer.rename_test", text="start from 1")
@@ -89,7 +89,7 @@ class BONECRAFT_PT_rename_bone(bpy.types.Panel):
         col.scale_x = scale_factor
 
         for i, item in enumerate(items):
-            ops = col.operator("ezrenamer.rename_pose_bones", text=item)
+            ops = col.operator("ezrenamer.rename_pose_bones", text=item, translate=False)
             ops.operation = 'add/replace'
             ops.index = i
             ops.target_parts = target_part
