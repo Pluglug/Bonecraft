@@ -3,11 +3,6 @@ import bpy
 
 class ModeToggleUtils:
     @staticmethod
-    def get_active_bone_name(context) -> str:
-        bone = context.active_bone or context.active_pose_bone or None
-        return bone.name if bone else None
-
-    @staticmethod
     def get_linked_armature(rigged_object) -> bpy.types.Object:
         for modifier in rigged_object.modifiers:
             if modifier.type == 'ARMATURE':
@@ -18,8 +13,14 @@ class ModeToggleUtils:
     def get_rigged_mesh(armature) -> bpy.types.Object:
         for child in armature.children:
             if child.type == 'MESH':
-                return child
+                if MTU.get_linked_armature(child) == armature:
+                    return child
         return None
+
+    @staticmethod
+    def get_active_bone_name(context) -> str:
+        bone = context.active_bone or context.active_pose_bone or None
+        return bone.name if bone else None
 
     @staticmethod
     def switch_mode(context, target_object, mode='OBJECT', secondary_object=None):

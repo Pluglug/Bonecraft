@@ -156,13 +156,42 @@ class BONECRAFT_OT_ClearConstraints(ArmModeMixin, bpy.types.Operator):
         return {'FINISHED'}
 
 
+import math
+class BONECRAFT_OT_Roll_Reverse(ArmModeMixin, bpy.types.Operator):
+    """Reverse the roll of selected bones"""
+    bl_idname = "bonecraft.roll_reverse"
+    bl_label = "Reverse Roll"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @with_mode('EDIT')
+    def execute(self, context):
+        if (ao := context.active_object) is None \
+            or ao.type != 'ARMATURE' or ao.data.use_mirror_x:
+            self.report({'ERROR'}, "Cannot reverse roll in mirrored mode")
+            return {'CANCELLED'}
+
+        DBG_OPS and log.header("Reversing Roll")
+        bones = context.selected_bones
+
+        for bone in bones:
+            DBG_OPS and log.info(f"Bone: {bone.name}, Roll: {bone.roll}")
+            bone.roll = math.fmod(bone.roll + math.pi, 2 * math.pi)
+            if bone.roll > math.pi:
+                bone.roll -= 2 * math.pi
+            elif bone.roll < -math.pi:
+                bone.roll += 2 * math.pi
+            DBG_OPS and log.info(f"Reversed Roll: {bone.roll}")
+
+        return {'FINISHED'}
+
 
 operator_classes = [
     BONECRAFT_OT_ParentSet,
     BONECRAFT_OT_ParentClear,
     BONECRAFT_OT_AddConstraint,
     BONECRAFT_OT_CopyConstraints,
-    BONECRAFT_OT_ClearConstraints
+    BONECRAFT_OT_ClearConstraints,
+    BONECRAFT_OT_Roll_Reverse,
 ]
 
 
