@@ -37,14 +37,14 @@ class NameMod(bpy.types.Operator):
     bl_idname = "object.name_mod"
     bl_label = "Name Mod"
     bl_description = "Modify the name of the selected object"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {"REGISTER", "UNDO"}
 
     nm_options: bpy.props.PointerProperty(type=RenameOptions)
 
     @classmethod
     def poll(cls, context):
         return context.object is not None
-    
+
     def execute(self, context):
         objects = context.selected_objects
         for obj in objects:
@@ -54,7 +54,7 @@ class NameMod(bpy.types.Operator):
                 obj.name = obj.name + "_" + self.nm_options.nm_str_presuf
         if self.nm_options.nm_reset_after_use:
             self.nm_options.nm_str_presuf = ""
-        return {'FINISHED'} 
+        return {"FINISHED"}
 
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)

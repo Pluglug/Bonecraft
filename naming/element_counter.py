@@ -15,6 +15,7 @@ except:
 
 from abc import ABC, abstractmethod
 
+
 class CounterInterface(ABC):
     """Interface for CounterElement."""
 
@@ -51,22 +52,22 @@ class CounterInterface(ABC):
         pass
 
     def _update_counter_values(self, value):
-        """ Ensuring sync between value and value_int."""
+        """Ensuring sync between value and value_int."""
         self._value, self._value_int = self._parse_value(value)
 
-    def _parse_value(self, value: 'str|int') -> tuple[str, int]:
+    def _parse_value(self, value: "str|int") -> tuple[str, int]:
         if value is None:
             return None, None
 
         try:
             value_int = int(value)
-            value_str = f'{value_int:0{self.digits}d}'
+            value_str = f"{value_int:0{self.digits}d}"
             return value_str, value_int
         except ValueError:
             log.error(f"Value '{value}' cannot be converted.")
             return None, None
 
-    def add(self, value: 'str|int'):
+    def add(self, value: "str|int"):
         if isinstance(value, (int, str)):
             _, num_int = self._parse_value(value)
             if num_int is not None:
@@ -74,7 +75,9 @@ class CounterInterface(ABC):
                 if new_value_int >= 0:
                     self.value_int = new_value_int
         else:
-            raise ValueError(f"Cannot add type {type(value).__name__} to {type(self).__name__}.")
+            raise ValueError(
+                f"Cannot add type {type(value).__name__} to {type(self).__name__}."
+            )
 
     # # 将来的に、特殊メソッドを使用してNEのvalueなどをもっと扱いやすくしたい
     # def __add__(self, other):
@@ -110,8 +113,9 @@ class CounterInterface(ABC):
 
         if not isinstance(source_counter, CounterInterface):
             raise ValueError(
-                f"source_counter must be a CounterInterface, not {type(source_counter).__name__}")
-        
+                f"source_counter must be a CounterInterface, not {type(source_counter).__name__}"
+            )
+
         if source_counter.value is None:
             # Continue to use own value if the source counter has no value.
             return
@@ -136,20 +140,20 @@ class CounterInterface(ABC):
 # TODO: EzとBlのカウンターを統合する  Indexerとかにする?
 class EzCounterElement(NamingElement, CounterInterface):
     element_type = "ez_counter"
-    
+
     def apply_settings(self, settings):
         super().apply_settings(settings)
-        self.digits = settings.get('digits', 2)
+        self.digits = settings.get("digits", 2)
         # セパレーターとセットで識別する場合、カウンターが名前の先頭にあるとセパレーターが付与されない。
-        # できれば、名前の先頭にあってほしくない。なにか制約を考える必要がある。
+        # bl_counterとの区別ができないため、名前の先頭にあってほしくない。なにか制約を考える必要がある。
 
     @maybe_with_separator
     @capture_group
     def build_pattern(self):
-        # sep = re.escape(self.get_separator())
-        # return f'{sep}\\d{{{self.digits}}}'  # このようにセパレーターとセットで識別することで、bl_counterとの衝突をある程度避けることができる
-        return f'\\d{{{self.digits}}}' # (?=\D|$)'あえて"00"を取らせちゃう 3桁以上だとダメ  # FIXME: bl_counterを拾ってしまう
-    
+        return (
+            f"\\d{{{self.digits}}}"  # FIXME: bl_counterを拾ってしまう foo.001 -> foo-00
+        )
+
     def standby(self):
         super().standby()
         self._value_int = None
@@ -163,19 +167,16 @@ class EzCounterElement(NamingElement, CounterInterface):
             self._value = match.group(self.id)
             self._value_int = int(self.value)
             self.start = match.start(self.id)
-            self.end = match.end(self.id) 
-            self.forward = match.string[:self.start]
-            self.backward = match.string[self.end:]
+            self.end = match.end(self.id)
+            self.forward = match.string[: self.start]
+            self.backward = match.string[self.end :]
             return True
         return False
-    
-    # def get_separator(self):
-    #     return self.separator  # + "|\\."
 
     @property
     def value(self):
         return self._value
-    
+
     @value.setter
     def value(self, value):
         self._update_counter_values(value)
@@ -184,22 +185,23 @@ class EzCounterElement(NamingElement, CounterInterface):
     def value_int(self):
         # CounterElement holds both the string and integer representation of the counter.
         return self._value_int
-    
+
     @value_int.setter
     def value_int(self, value):
         self._update_counter_values(value)
 
     def gen_proposed_name(self, i: int) -> str:
-        """ Generates a proposed name using the given index."""
+        """Generates a proposed name using the given index."""
         return f"{self.forward}{i:0{self.digits}d}{self.backward}"
 
     def test_random_output(self):
         # return self.separator, f'{random.randint(0, 10 ** self.digits - 1):0{self.digits}d}'
-        return self.separator,  f'{random.randint(1, 15):0{self.digits}d}'
-    
-    
+        return self.separator, f"{random.randint(1, 15):0{self.digits}d}"
+
+
 class BlCounterElement(NamingElement, CounterInterface):  # sys_counterとかにする?
-    """ Buildin Blender counter pattern like ".001" """
+    """Buildin Blender counter pattern like ".001" """
+
     # right-most dot-number
     element_type = "bl_counter"
 
@@ -207,7 +209,7 @@ class BlCounterElement(NamingElement, CounterInterface):  # sys_counterとかに
         # No settings for this element.
         self.cache_invalidated = True
 
-        self._id = 'bl_counter'
+        self._id = "bl_counter"
         self._order = 100  # とにかく最後にあってほしい
         self._enabled = False  # デフォルトで名前の再構築時に無視されるようにする?
         self._separator = "."  # The blender counter is always "." .
@@ -217,8 +219,7 @@ class BlCounterElement(NamingElement, CounterInterface):  # sys_counterとかに
     def build_pattern(self):
         # I don't know of any other pattern than this. Please let me know if you do.
         sep = re.escape(self.separator)
-        # セパレーターとセットで識別することで、ez_counterとの衝突をある程度避けることができる
-        return f'{sep}\\d{{{self.digits}}}$'
+        return f"{sep}\\d{{{self.digits}}}$"
 
     def standby(self):
         super().standby()
@@ -231,14 +232,14 @@ class BlCounterElement(NamingElement, CounterInterface):  # sys_counterとかに
             self._value = match.group(self.id)[1:]  # drop the dot
             self._value_int = int(self.value[1:])
             self.start = match.start(self.id)
-            self.forward = match.string[:self.start] + self.separator  # need separator
+            self.forward = match.string[: self.start] + self.separator  # need separator
             return True
         return False
 
     @property
     def value(self):
         return self._value
-    
+
     @value.setter
     def value(self, value):
         self._update_counter_values(value)
@@ -247,7 +248,7 @@ class BlCounterElement(NamingElement, CounterInterface):  # sys_counterとかに
     def value_int(self):
         # CounterElement holds both the string and integer representation of the counter.
         return self._value_int
-    
+
     @value_int.setter
     def value_int(self, value):
         self._update_counter_values(value)
@@ -257,26 +258,26 @@ class BlCounterElement(NamingElement, CounterInterface):  # sys_counterとかに
 
     def test_random_output(self):
         # return self.separator, f'{random.randint(0, 10 ** self.digits - 1):0{self.digits}d}'
-        return self.separator,  f'{random.randint(1, 15):0{self.digits}d}'
-
+        return self.separator, f"{random.randint(1, 15):0{self.digits}d}"
 
     # 末尾のデフォルトカウンター 順序入れ替え可能なカスタムカウンター
     # CounterElement に "." をセパレータとして設定しようとした場合に、
     # BlCounterElement との衝突が起こりうることを警告するポップアップを表示
-    # そもそもCounterとBlCounterを区別しないようにする? 
+    # そもそもCounterとBlCounterを区別しないようにする?
     # 設定を変えたときに、変換できると便利 (01 -> 00001)
     # "001"、"-01"、".A"などの開始設定 なにかExcelのオートフィルみたいなことができるモジュールはないか?
     #  "Bone-A-01", "Bone-B-02" など  マルチカウンターサポート これはcounterを高度に抽象化すればできるかもしれない
 
+
 if __name__ == "__main__":
     # testings
-    def alphabet_sequence_generator(start='a'):
+    def alphabet_sequence_generator(start="a"):
         current = start
         while True:
             yield current
             next_char = chr(ord(current[-1]) + 1)
-            current = current[:-1] + next_char if next_char <= 'z' else current + 'a'
+            current = current[:-1] + next_char if next_char <= "z" else current + "a"
 
-    gen = alphabet_sequence_generator('a')
+    gen = alphabet_sequence_generator("a")
     for _ in range(5):
         print(next(gen))  # a, b, c, d, e

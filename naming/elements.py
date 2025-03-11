@@ -7,12 +7,12 @@ import random
 import itertools
 
 try:
-    from . element_base import NamingElement
-    from . element_text import TextElement, PositionElement
-    from . element_counter import BlCounterElement
+    from .element_base import NamingElement
+    from .element_text import TextElement, PositionElement
+    from .element_counter import BlCounterElement
 
-    from .. debug import log, DBG_RENAME
-    from . test_settings import rename_settings
+    from ..debug import log, DBG_RENAME
+    from .test_settings import rename_settings
 except:
     from element_base import NamingElement
     from element_text import TextElement, PositionElement
@@ -26,40 +26,47 @@ except:
 # def uprefs():
 #     return bpy.context.preferences
 
+
 def prefs():
     return rename_settings
     # return uprefs().addons[ADDON_ID].preferences
 
+
 # TODO: メインカウンター、サブカウンター属性を持たせる
 
+
 # EditableObjectをここまで連れてくる?
-class NamingElements: # (ABC):
+class NamingElements:
     """名前生成のルールとロジック"""
+
     object_type = None
+
     def __init__(self, obj_type):
         self.elements = self._create_elements(obj_type)
 
     def _create_elements(self, obj_type):
-        DBG_RENAME and log.header(f'build_elements: {obj_type}').increase()
+        DBG_RENAME and log.header(f"build_elements: {obj_type}").increase()
         pr = prefs()
         if obj_type not in pr:
             raise ValueError(f"Unknown object type: {obj_type}")
         settings: list = pr[obj_type]  # TODO: prefsを作成後作り直す
-        
+
         elements = []
         for elem_settings in settings:
             elem_type = elem_settings["type"]
             element = self._create_element(elem_type, elem_settings)
             elements.append(element)
-        
+
         elements.append(BlCounterElement({}))
         elements.sort(key=lambda e: e.order)
         DBG_RENAME and log.decrease().info(
-            f'{obj_type}: {len(elements)} elements\n' + '\n' \
-                .join([f'  {e.id}: {e.element_type}' for e in elements]))
+            f"{obj_type}: {len(elements)} elements\n"
+            + "\n".join([f"  {e.id}: {e.element_type}" for e in elements])
+        )
         return elements
-    
+
     _element_classes = None
+
     @classmethod
     def _get_element_classes(cls):
         if cls._element_classes:
@@ -67,7 +74,7 @@ class NamingElements: # (ABC):
         element_classes = {}
         subclasses = NamingElement.__subclasses__()
         for subclass in subclasses:
-            element_type = getattr(subclass, 'element_type', None)
+            element_type = getattr(subclass, "element_type", None)
             if element_type:
                 element_classes[element_type] = subclass
         cls._element_classes = element_classes
@@ -88,14 +95,17 @@ class NamingElements: # (ABC):
         raise ValueError(f"Unknown element type: {element_type}")
 
     def search_elements(self, name: str):
-        DBG_RENAME and log.header(f'search_elements: {name}')
+        DBG_RENAME and log.header(f"search_elements: {name}")
         for element in self.elements:
             element.standby()
-            element.search(name)  # TODO: ETに前後の状態を渡せば、さらに正確に検索できる かもしれない
+            element.search(
+                name
+            )  # TODO: ETに前後の状態を渡せば、さらに正確に検索できる かもしれない
         DBG_RENAME and log.info(
-            '\n'.join([f'  - {e.id}: {e.value}' for e in self.elements]))
+            "\n".join([f"  - {e.id}: {e.value}" for e in self.elements])
+        )
 
-    def update_elements(self, new_elements: dict=None):
+    def update_elements(self, new_elements: dict = None):
         if not new_elements and not isinstance(new_elements, dict):
             return
 
@@ -104,7 +114,7 @@ class NamingElements: # (ABC):
                 # new_elementsの値がNoneの場合は、その要素を無効化する
                 element.value = new_elements[element.id] or None
                 # element.set_value(new_elements[element.name] or None)
-        
+
         new_name = self.render_name()
         for element in self.elements:
             # elementのキャプチャ要素を更新する
@@ -113,18 +123,21 @@ class NamingElements: # (ABC):
         return self
 
     def render_name(self) -> str:
-        elements_parts = [element.render() for element in self.elements \
-                          if element.enabled and element.value]
+        elements_parts = [
+            element.render()
+            for element in self.elements
+            if element.enabled and element.value
+        ]
         name_parts = []
         for sep, value in elements_parts:
             if name_parts:
                 name_parts.append(sep)
             name_parts.append(value)
-        name = ''.join(name_parts)
-        DBG_RENAME and log.info(f'render_name: {name}')
+        name = "".join(name_parts)
+        DBG_RENAME and log.info(f"render_name: {name}")
         return name
 
-    def chenge_all_settings(self, new_settings):
+    def change_all_settings(self, new_settings):
         for element in self.elements:
             element.change_settings(new_settings)
 
@@ -132,30 +145,35 @@ class NamingElements: # (ABC):
         for element in self.elements:
             if element.cache_invalidated:
                 element.update_cache()
-    
+
     def pring_elements(self):
         for element in self.elements:
             log.info(f"{element.id}: {element.value}")
-    
+
     def gen_random_test_names(self, num_cases=10) -> list:
         """Generate random names for test cases"""
         test_names = []
         for _ in range(num_cases):
-            elem_parts = [elem.test_random_output() for elem in self.elements \
-                          if random.choice([True, False])]
+            elem_parts = [
+                elem.test_random_output()
+                for elem in self.elements
+                if random.choice([True, False])
+            ]
             name_parts = []
             for sep, value in elem_parts:
                 if name_parts:
                     name_parts.append(sep)
                 name_parts.append(value)
-            test_names.append(''.join(name_parts))
+            test_names.append("".join(name_parts))
         return test_names
 
     def gen_test_names(self) -> list:
         """Generate all combinations of test case names"""
 
         # Generate combinations where each element is present or absent
-        element_combinations = itertools.product([True, False], repeat=len(self.elements))
+        element_combinations = itertools.product(
+            [True, False], repeat=len(self.elements)
+        )
 
         test_cases = []
         for combination in element_combinations:
@@ -166,15 +184,15 @@ class NamingElements: # (ABC):
                     if name_parts:
                         name_parts.append(sep)
                     name_parts.append(value)
-            test_cases.append(''.join(name_parts))
+            test_cases.append("".join(name_parts))
 
         return test_cases
 
 
-if '__main__' == __name__:
+if "__main__" == __name__:
     # testing
-    ne = NamingElements('pose_bone')
-    log.header("Generate test names", 'TEST').increase()
+    ne = NamingElements("pose_bone")
+    log.header("Generate test names", "TEST").increase()
     names = ne.gen_random_test_names(5)
     # names = ne.gen_test_names()
     # log.info('\n'.join(names))

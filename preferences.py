@@ -14,8 +14,8 @@ class MyAddonPreferences(bpy.types.AddonPreferences):
     presets_enum: bpy.props.EnumProperty(
         name="Presets",
         description="Available presets",
-        items=[('PRESET_NAME', 'Preset Name', 'Description', 'FILE_PATH', 0)],
-        update=update_preset_selection
+        items=[("PRESET_NAME", "Preset Name", "Description", "FILE_PATH", 0)],
+        update=update_preset_selection,
     )
 
     # 現在選択されているプリセットの名前

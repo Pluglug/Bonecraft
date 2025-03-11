@@ -1,16 +1,18 @@
 from abc import ABC, abstractmethod
 import re
 
-try: # Running in Blender
+try:  # Running in Blender
     from ..debug import log, DBG_RENAME
-    # from . naming_test_utils import (rename_settings, # test_selected_pose_bones, 
-    #                            random_test_names, generate_test_names, 
+
+    # from . naming_test_utils import (rename_settings, # test_selected_pose_bones,
+    #                            random_test_names, generate_test_names,
     #                            )
     # from . regex_utils import capture_group, maybe_with_separator
 except:  # Running Test in VSCode
     from debug import log, DBG_RENAME
-    # from naming_test_utils import (rename_settings, # test_selected_pose_bones, 
-    #                            random_test_names, generate_test_names, 
+
+    # from naming_test_utils import (rename_settings, # test_selected_pose_bones,
+    #                            random_test_names, generate_test_names,
     #                            )
     # from regex_utils import capture_group, maybe_with_separator
 
@@ -22,7 +24,7 @@ class NamingElement(ABC):
     def __init__(self, settings):
         self.apply_settings(settings)
         self.standby()
-        DBG_RENAME and log.info(f'init: {self.id}')
+        DBG_RENAME and log.info(f"init: {self.id}")
 
     @abstractmethod
     def build_pattern(self):
@@ -37,7 +39,7 @@ class NamingElement(ABC):
             self.update_cache()
         match = self.compiled_pattern.search(target_string)
         return self.capture(match)
-    
+
     def capture(self, match):
         if match:
             self.value = match.group(self.id)
@@ -52,7 +54,7 @@ class NamingElement(ABC):
 
     def update(self, new_string):
         self.search(new_string)
-    
+
     def render(self):
         if self.enabled and self.value:
             return self.separator, self.value
@@ -60,7 +62,7 @@ class NamingElement(ABC):
     @property
     def value(self) -> str:
         return self._value
-    
+
     @value.setter
     def value(self, new_value):
         if new_value is not None:
@@ -74,11 +76,16 @@ class NamingElement(ABC):
     @property
     def id(self):
         return self._id
-    
+
     @property
     def name(self):
         caller = log.get_caller_info()
-        log.warning("name has been deprecated. Use id instead. Called by: " + caller.filename + " at line " + str(caller.lineno))
+        log.warning(
+            "name has been deprecated. Use id instead. Called by: "
+            + caller.filename
+            + " at line "
+            + str(caller.lineno)
+        )
         return self.id
 
     @property
@@ -95,11 +102,11 @@ class NamingElement(ABC):
 
     def apply_settings(self, settings):
         self.cache_invalidated = True
-        
-        self._id = settings.get('name', self.generate_identifier())
-        self._order = settings.get('order', 0)
-        self._enabled = settings.get('enabled', True)
-        self._separator = settings.get('separator', "_")
+
+        self._id = settings.get("name", self.generate_identifier())
+        self._order = settings.get("order", 0)
+        self._enabled = settings.get("enabled", True)
+        self._separator = settings.get("separator", "_")
 
     def invalidate_cache(self):
         self.cache_invalidated = True
@@ -107,7 +114,9 @@ class NamingElement(ABC):
     def update_cache(self):
         if self.cache_invalidated:
             self.compiled_pattern = re.compile(self.build_pattern())
-            DBG_RENAME and log.info(f'  update_cache: {self.id}: {self.compiled_pattern}')
+            DBG_RENAME and log.info(
+                f"  update_cache: {self.id}: {self.compiled_pattern}"
+            )
             self.cache_invalidated = False
 
     @classmethod
@@ -115,9 +124,9 @@ class NamingElement(ABC):
         # safe_name = re.sub(r'\W|^(?=\d)', '_', self.id).lower()  # さらに重複があった場合には、_1, _2, ... というようにする
         cls._group_counter += 1
         return f"{cls.element_type}_{cls._group_counter}"
-    
+
     @abstractmethod
     def test_random_output(self):
         pass
-    
+
     # new_elementsを作るための便利メソッドが欲しい

@@ -26,6 +26,7 @@ class Color(Enum):
     # Add 10 if using background colors
     # ansi(Color.WHITE + 10)
 
+
 class Style(Enum):
     RESET = 0
     BOLD = 1
@@ -34,8 +35,9 @@ class Style(Enum):
     UNDERLINE = 4
     INVERTED = 7
 
+
 def ansi(*styles):
-    return '\033[{}m'.format(";".join(str(color.value) for color in styles))
+    return "\033[{}m".format(";".join(str(color.value) for color in styles))
 
 
 class PrintLog:
@@ -51,7 +53,7 @@ class PrintLog:
             return ""
 
         frame = traceback.extract_stack(None, 4)[0]  # Get caller's frame
-        module_name = frame.filename.split('\\')[-1]
+        module_name = frame.filename.split("\\")[-1]
         return f"{module_name.ljust(10)}: {str(frame.lineno).ljust(4)} {frame.name.ljust(10)}: "
 
     def _log(self, color, *args):
@@ -72,14 +74,14 @@ class PrintLog:
         if title is not None:
             title = str(title)
             header_length = max(len(msg), self.line_length)  # len(title)+8)
-            title_text = title.center(header_length, '-')
+            title_text = title.center(header_length, "-")
             self._log(ansi(Color.GREEN, Style.BOLD), title_text)
 
         if msg:
             self._log(ansi(Color.GREEN, Style.BOLD), msg)
 
         return self
-    
+
     def footer(self, *args):
         """Green text indicating the end of an operation."""
         self.reset_indent()
@@ -97,7 +99,7 @@ class PrintLog:
         """Blue text indicating the progress of an operation."""
         self._log(ansi(Color.CYAN), *args)
         return self
-    
+
     def error(self, *args):
         """Red text indicating an error that is not fatal."""
         self._log(ansi(Color.RED), *args)
@@ -125,7 +127,7 @@ class PrintLog:
         # 0: get_caller_info, 1: log.get_caller_info, 2: caller
         if len(stack) < 3:
             return "Unknown caller"
-        
+
         frame = stack[2]
         frame_info = inspect.getframeinfo(frame[0])
 
@@ -137,7 +139,7 @@ class PrintLog:
         #     # "code_context": frame_info.code_context
         # }
 
-    # あんまり便利じゃない 
+    # あんまり便利じゃない
     # `log(" " * len(path) + "/".join(path))`とかのほうがシンプルでよい
     # デコレーターとして使えるなら便利かも
     @contextlib.contextmanager
@@ -170,7 +172,7 @@ class PrintLog:
         """Reset the indent level to zero."""
         self.indent_level = 0
         return self
-    
+
     def start_timer(self, msg, title=None):
         """Timer start and call header()"""
         self.header("Timer started: " + msg, title)
@@ -184,9 +186,9 @@ class PrintLog:
             return self
 
         now = time.time()
-        self._log(ansi(Color.GREEN), f'{now - self.timer:.4f} sec', *args)
+        self._log(ansi(Color.GREEN), f"{now - self.timer:.4f} sec", *args)
         return self
-    
+
     def stop_timer(self, msg="Timer stopped.", *args):
         """Stop the timer"""
         self.time(msg, *args)
@@ -203,7 +205,7 @@ log = PrintLog()
 # log.error(*args)
 # log.warn(*args)
 
-# TODO: 
+# TODO:
 # __all__ = ["log"]
 # # __all__ += ["log_exec"]
 
@@ -211,7 +213,7 @@ log = PrintLog()
 # __all__ += [name for name in globals() if name.startswith("DBG")]
 
 if __name__ == "__main__":
-    
+
     def bar():
         with log.indented():
             log.info("This is a message from bar().")

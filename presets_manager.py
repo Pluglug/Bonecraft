@@ -17,25 +17,31 @@ class PresetManager:
     def create_preset_data(rigging_naming_conventions, preset_name):
         return {
             "addon": ADDON_ID,
-            "addon_version": '.'.join(map(str, VERSION)),
+            "addon_version": ".".join(map(str, VERSION)),
             "preset_name": preset_name,
             "Last_saved_date": datetime.now().isoformat(),
-            "Rigging_naming_conventions": rigging_naming_conventions
+            "Rigging_naming_conventions": rigging_naming_conventions,
         }
 
     @staticmethod
     def is_valid_format(data):
-        required_keys = {'addon', 'addon_version', 'preset_name', 'Last_saved_date', 'Rigging_naming_conventions'}
+        required_keys = {
+            "addon",
+            "addon_version",
+            "preset_name",
+            "Last_saved_date",
+            "Rigging_naming_conventions",
+        }
         return required_keys.issubset(data.keys())
 
     def load_preset(self, file_path):
         # 現在編集中のファイルとして設定する。
-        with open(file_path, 'r') as file:
+        with open(file_path, "r") as file:
             data = json.load(file)
 
         if self.is_valid_format(data):
             self.unsaved_changes = False
-            return data['Rigging_naming_conventions']
+            return data["Rigging_naming_conventions"]
         else:
             raise ValueError("Invalid preset format")
 
@@ -43,7 +49,7 @@ class PresetManager:
         # bone_namingsからプロパティーを取得
         preset_data = self.create_preset_data(rigging_naming_conventions, preset_name)
 
-        with open(file_path, 'w') as file:
+        with open(file_path, "w") as file:
             json.dump(preset_data, file, indent=4)
 
         # 未保存フラグを消す
@@ -55,6 +61,7 @@ class PresetManager:
     #     return self.data["prefixes"]
     #
     # # その他の取得メソッド...
+
 
 # test_file_path = "C:\\Users\\113412A00AUKD\\Desktop\\ICF_AutoCapsule_Disabled\\_bw2ill\\4.0.0\\4.0\\scripts\\addons\\bonecraft\\user\\Naming presets for rigging\\MyNameingPreset.json"
 # naming_pre_data = PresetManager.load_preset(test_file_path)

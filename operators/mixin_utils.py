@@ -21,15 +21,23 @@ def with_mode(mode):
                 result = func(self, context, *args, **kwargs)
 
             except Exception as e:
-                log.error(f"Error in with_mode: {e}, Operator: {self.bl_idname}, Traceback: {traceback.format_exc()}")
-                result = {'CANCELLED'}
+                log.error(
+                    f"Error in with_mode: {e}, Operator: {self.bl_idname}, Traceback: {traceback.format_exc()}"
+                )
+                result = {"CANCELLED"}
 
             finally:
-                if original_mode and context.object and context.object.mode != original_mode:
+                if (
+                    original_mode
+                    and context.object
+                    and context.object.mode != original_mode
+                ):
                     bpy.ops.object.mode_set(mode=original_mode)
 
             return result
+
         return wrapper
+
     return decorator
 
 
@@ -37,7 +45,9 @@ class ArmModeMixin:
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return obj is not None and obj.type == 'ARMATURE' and obj.mode in {'POSE', 'EDIT'}
+        return (
+            obj is not None and obj.type == "ARMATURE" and obj.mode in {"POSE", "EDIT"}
+        )
 
     @contextlib.contextmanager
     def mode_context(self, context, mode):

@@ -13,7 +13,7 @@ except:
 
 # class UnknownElement(NamingElement):
 #     element_type = "text"
-    
+
 #     def build_pattern(self):
 #         # TODO: プリセットに無い語を検出可能にする
 #         return None
@@ -27,12 +27,12 @@ class TextElement(NamingElement):
 
     def apply_settings(self, settings):
         super().apply_settings(settings)
-        self.items = settings.get('items', [])
+        self.items = settings.get("items", [])
 
     @maybe_with_separator
     @capture_group
     def build_pattern(self):
-        return '|'.join(self.items)
+        return "|".join(self.items)
 
     def test_random_output(self):
         return self.separator, random.choice(self.items)
@@ -43,17 +43,17 @@ class PositionElement(NamingElement):
 
     def apply_settings(self, settings):
         super().apply_settings(settings)
-        self.items = settings.get('items', [])
-    
+        self.items = settings.get("items", [])
+
     def build_pattern(self):
         sep = re.escape(self.separator)
-        pattern = '|'.join(self.items)
+        pattern = "|".join(self.items)
 
         if self.order == 1:
-            return f'(?P<{self.id}>{pattern}){sep}'
+            return f"(?P<{self.id}>{pattern}){sep}"
         # elif self.get_order() > 1:
         else:
-            return f'{sep}(?P<{self.id}>{pattern})'
+            return f"{sep}(?P<{self.id}>{pattern})"
 
     def test_random_output(self):
         return self.separator, random.choice(self.items)

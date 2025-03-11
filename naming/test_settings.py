@@ -1,7 +1,7 @@
 # TODO: 設定で一括で大文字にしたり、小文字にしたり、キャメルケースにしたりできるようにする
 # pyright: reportInvalidTypeForm=false
 
-try: # Running in Blender
+try:  # Running in Blender
     from ..debug import log, DBG_RENAME
 except:  # Running Test in VSCode
     from debug import log, DBG_RENAME
@@ -14,14 +14,14 @@ rename_settings = {
             "type": "text",
             "enabled": True,
             "items": [
-                "CTRL", 
-                "DEF", 
-                "MCH", 
-                "ORG", 
-                "DRV", 
-                "TRG", 
+                "CTRL",
+                "DEF",
+                "MCH",
+                "ORG",
+                "DRV",
+                "TRG",
                 "PROP",
-                ],
+            ],
             "separator": "_",
         },
         {
@@ -30,28 +30,28 @@ rename_settings = {
             "type": "text",
             "enabled": True,
             "items": [
-                "Bone", 
-                "Root", 
-                "Spine", 
+                "Bone",
+                "Root",
+                "Spine",
                 "Chest",
-                "Torso", 
+                "Torso",
                 "Hips",
                 "Tail",
                 "Neck",
-                "Head", 
+                "Head",
                 "Shoulder",
-                "Arm", 
+                "Arm",
                 "Elbow",
                 "ForeArm",
-                "Hand", 
-                "InHand", 
-                "Finger", 
+                "Hand",
+                "InHand",
+                "Finger",
                 "UpLeg",
-                "Leg", 
+                "Leg",
                 "Shin",
-                "Foot", 
+                "Foot",
                 "Knee",
-                "Toe", 
+                "Toe",
             ],
             "separator": "_",
         },
@@ -69,17 +69,17 @@ rename_settings = {
             "type": "text",
             "enabled": True,
             "items": [
-                "Base", 
-                "Tweak", 
-                "Pole", 
-                "IK", 
-                "FK", 
-                "Roll", 
-                "Rot", 
-                "Loc", 
+                "Base",
+                "Tweak",
+                "Pole",
+                "IK",
+                "FK",
+                "Roll",
+                "Rot",
+                "Loc",
                 "Scale",
                 "INT",
-                ],
+            ],
             "separator": "_",
         },
         {
@@ -88,16 +88,16 @@ rename_settings = {
             "type": "text",
             "enabled": True,
             "items": [
-                "int", 
+                "int",
                 "rot",
-                "temp", 
-                "copy", 
-                "delete", 
-                "hide", 
-                "show", 
-                "hide_select", 
-                "show_select"
-                ],
+                "temp",
+                "copy",
+                "delete",
+                "hide",
+                "show",
+                "hide_select",
+                "show_select",
+            ],
             "separator": "_",
         },
         {
@@ -111,8 +111,7 @@ rename_settings = {
         {
             "order": 7,
             "name": "position",
-            "type": "position",  # positionである必要がなくなった  
-            # "type": "text",　# 否定 セパレーター込みで一つの要素として扱う必要がある 正規表現を見直す必要がある searchロジックでのセパレーターの扱いを見直す
+            "type": "position",
             "enabled": True,
             "items": ["L", "R", "Top", "Bot", "Fr", "Bk"],  # XAXIS, YAXIS, ZAXIS
             "separator": ".",
@@ -126,29 +125,35 @@ import bpy
 
 def ic_cb(value) -> str:
     """Return icon name for checkbox."""
-    return 'CHECKBOX_HLT' if value else 'CHECKBOX_DEHLT'
+    return "CHECKBOX_HLT" if value else "CHECKBOX_DEHLT"
 
 
 SEPARATOR_ITEMS = [
-    ('_', "Underscore", "_"),
-    ('.', "Dot", "."),
-    ('-', "Dash", "-"),
-    (' ', "Space", " "),
+    ("_", "Underscore", "_"),
+    (".", "Dot", "."),
+    ("-", "Dash", "-"),
+    (" ", "Space", " "),
 ]
 
 NAMING_TYPE_ITEMS = [
-    ('text', "Text", "Normal text"),
-    ('position', "Position", "Short words that indicate position, such as left or right"),
-    ('ez_counter', "EZ Counter", "Replaces the counter that is automatically added at the end"),
+    ("text", "Text", "Normal text"),
+    (
+        "position",
+        "Position",
+        "Short words that indicate position, such as left or right",
+    ),
+    (
+        "ez_counter",
+        "EZ Counter",
+        "Replaces the counter that is automatically added at the end",
+    ),
 ]
 
-POSITION_ITEMS = [
-    "L", "R", "Top", "Bot", "Fr", "Bk"
-]
+POSITION_ITEMS = ["L", "R", "Top", "Bot", "Fr", "Bk"]
 
 RENAMABLE_OBJECTS = [
-    ('POSE_BONE', "Pose Bone", "Rename pose bones"),
-    ('DEBUG', "Debug", "Debug"),
+    ("POSE_BONE", "Pose Bone", "Rename pose bones"),
+    ("DEBUG", "Debug", "Debug"),
     # ('MATERIAL', "Material", "Rename materials"),  # 未実装
     # ('OBJECT', "Object", "Rename objects"),
     # ('SCENE', "Scene", "Rename scenes"),
@@ -159,9 +164,9 @@ RENAMABLE_OBJECTS = [
 
 class PP_ElementItem(bpy.types.PropertyGroup):
     enabled: bpy.props.BoolProperty(
-        name="Enabled", 
+        name="Enabled",
         description="If enabled, this word can be used in renaming",
-        default=True
+        default=True,
         # update=_emi_compile_regex,  # TODO: make this work
     )
     item: bpy.props.StringProperty(
@@ -173,12 +178,13 @@ class PP_ElementItem(bpy.types.PropertyGroup):
     )
 
     # 定義する場所はここではない?
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+    def draw_item(
+        self, context, layout, data, item, icon, active_data, active_propname, index
+    ):
         layout.separator(factor=0.1)
 
         layout.active = item.enabled
-        layout.prop(item, "enabled", text="", emboss=False,
-                 icon=ic_cb(item.enabled))
+        layout.prop(item, "enabled", text="", emboss=False, icon=ic_cb(item.enabled))
 
         layout.separator(factor=0.1)
 
@@ -191,6 +197,7 @@ class PP_ElementItem(bpy.types.PropertyGroup):
 # リネーム設定の各要素を管理するプロパティグループ
 class PP_NamingElement(bpy.types.PropertyGroup):
     """Element (prefixes, suffixes, etc.) in the naming convention."""
+
     def _update_name(self, context) -> None:
         pass
         # pr = prefs(context).rename_settings  # 仮
@@ -218,7 +225,7 @@ class PP_NamingElement(bpy.types.PropertyGroup):
     )
     separator: bpy.props.EnumProperty(
         name="Separator",
-        description="Separator to connect to the \"forward\" word (element)",
+        description='Separator to connect to the "forward" word (element)',
         items=SEPARATOR_ITEMS,
     )
     digits: bpy.props.IntProperty(
@@ -250,14 +257,14 @@ class PP_NamingElement(bpy.types.PropertyGroup):
             # インデックス操作必要?
             return True
         return False
-    
+
     def move_item(self, index: int, direction: int) -> bool:
         if index < len(self.items):
             if 0 <= index + direction < len(self.items):
                 self.items.move(index, index + direction)
                 return True
         return False
-    
+
     def get_item(self, num: int) -> str:
         if self.type in ["text", "position"]:
             if num < len(self.items):
@@ -274,17 +281,20 @@ class PP_NamingElement(bpy.types.PropertyGroup):
     def get_value(self, num):
         """Deprecated. Use get_item() instead."""
         caller = log.get_caller_info()
-        log.warn("get_value() is deprecated. Use get_item() instead. " + \
-                 f"Called from {caller.filename}:{caller.lineno}")
+        log.warn(
+            "get_value() is deprecated. Use get_item() instead. "
+            + f"Called from {caller.filename}:{caller.lineno}"
+        )
 
 
 class PP_NamingElements(bpy.types.PropertyGroup):
     """A naming convention based on the combination of each element.
     It exists for each object type (or namespace)."""
+
     object_type: bpy.props.EnumProperty(
         items=RENAMABLE_OBJECTS,
         name="Object Type",
-        description="Select the object type to rename"
+        description="Select the object type to rename",
     )
     elements: bpy.props.CollectionProperty(type=PP_NamingElement)
     active_element_index: bpy.props.IntProperty()  # for Element
@@ -304,17 +314,17 @@ class TestPreferences(bpy.types.AddonPreferences):
     idx_emi: bpy.props.IntProperty(  # for Element items
         name="Active Item Index",
         description="Index of the active item in the list",
-        options={'SKIP_SAVE'},
+        options={"SKIP_SAVE"},
     )
     idx_em: bpy.props.IntProperty(  # for NamingElement
         name="Active Element Index",
         description="Index of the active element in the list",
-        options={'SKIP_SAVE'},
+        options={"SKIP_SAVE"},
     )
     idx_ed_elements: bpy.props.IntProperty(  # for NamingElements
         name="Active Element Index",
         description="Index of the elements being edited",
-        options={'SKIP_SAVE'},
+        options={"SKIP_SAVE"},
     )
 
 
@@ -325,16 +335,14 @@ def property_register():
     bpy.utils.register_class(TestPreferences)
 
 
-
-
-
 class RENAME_UL_Element(bpy.types.UIList):
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+    def draw_item(
+        self, context, layout, data, item, icon, active_data, active_propname, index
+    ):
         layout.separator(factor=0.1)
 
         layout.active = item.enabled
-        layout.prop(item, "enabled", text="", emboss=False,
-                 icon=ic_cb(item.enabled))
+        layout.prop(item, "enabled", text="", emboss=False, icon=ic_cb(item.enabled))
 
         layout.separator(factor=0.1)
 
@@ -347,14 +355,14 @@ class RENAME_UL_Element(bpy.types.UIList):
         r.prop(item, "name", text="", emboss=False)
 
         r.separator(factor=0.5)
-    
+
 
 class RENAME_PT_Panel(bpy.types.Panel):
     bl_label = "Rename Settings"
     bl_idname = "RENAME_PT_panel"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = 'RenameTool'
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "RenameTool"
 
     def draw(self, context):
         layout = self.layout
@@ -366,14 +374,24 @@ class RENAME_PT_Panel(bpy.types.Panel):
         row = box.row()
         col = row.column()
         # col.template_list("RENAME_UL_Settings", "", scene, "rename_settings", scene, "rename_settings_index")
-        col.template_list("RENAME_UL_Element", "", scene, "rename_settings", scene, "rename_settings_index")
+        col.template_list(
+            "RENAME_UL_Element",
+            "",
+            scene,
+            "rename_settings",
+            scene,
+            "rename_settings_index",
+        )
 
         col = row.column(align=True)
-        ops = col.operator("uilist.entry_add", icon='ADD', text="")
+        ops = col.operator("uilist.entry_add", icon="ADD", text="")
         ops.list_path = "scene.rename_settings"
 
         # 選択された要素の詳細設定を表示
-        if scene.rename_settings_index >= 0 and len(scene.rename_settings) > scene.rename_settings_index:
+        if (
+            scene.rename_settings_index >= 0
+            and len(scene.rename_settings) > scene.rename_settings_index
+        ):
             setting = scene.rename_settings[scene.rename_settings_index]
 
             box = layout.box()
@@ -382,14 +400,16 @@ class RENAME_PT_Panel(bpy.types.Panel):
             box.prop(setting, "enabled")
             box.prop(setting, "separator")
 
-            if setting.type == 'ez_counter':
+            if setting.type == "ez_counter":
                 box.prop(setting, "digits")
 
             # itemsの編集UIを追加する
 
+
 # -------------------------------------------------------------------
 
 # setting utils
+
 
 class Item:
     def __init__(self, item_data):
@@ -413,7 +433,7 @@ class Item:
         else:
             log.error(f"Unknown type: {self.type}")
             return None
-    
+
     def len_items(self):
         return len(self.items)
 
@@ -428,7 +448,9 @@ class Setting:
 
 class SettingUtils:
     def __init__(self, settings_data):
-        self.settings = {name: Setting(setting) for name, setting in settings_data.items()}
+        self.settings = {
+            name: Setting(setting) for name, setting in settings_data.items()
+        }
 
     def get_setting(self, setting_name):
         return self.settings.get(setting_name)
@@ -446,4 +468,3 @@ if __name__ == "__main__":
 
     r = pose_bone_setting.get_item(tgt_name)  # .get_value(tgt_num)
     print(type(r.items))
-    

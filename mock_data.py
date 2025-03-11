@@ -1,4 +1,5 @@
 import os, sys
+
 sys.path.append(os.path.dirname(__file__))
 
 from collections.abc import MutableMapping
@@ -10,12 +11,15 @@ from naming import PoseBonesNamespace
 
 class MockPoseBone:
     """BlenderのPoseBoneを模倣するモッククラス"""
+
     def __init__(self, name, armature):
         self.name = name
         self.id_data = armature
 
+
 class MockPose(MutableMapping):
     """BlenderのPoseを模倣するモッククラス"""
+
     def __init__(self, armature, bone_names):
         self._bones = {name: MockPoseBone(name, armature) for name in bone_names}
         self._keys = list(self._bones.keys())
@@ -53,16 +57,20 @@ class MockPose(MutableMapping):
     def items(self):
         return self._bones.items()
 
+
 class MockArmature:
     """BlenderのArmatureを模倣するモッククラス"""
+
     def __init__(self, name, bone_names):
         self.name = name
         self.pose = MockPose(self, bone_names)
 
 
 # テスト用のMockArmatureオブジェクトを作成
-my_armature = MockArmature('MyArmature', ["Root", "Hand.l", "Spine_01", "Leg.R", "Arm.L", "Tail"])
-sub_armature = MockArmature('SubArmature', ["Bone", "Bone.001", "Bone.002", "Bone.003"])
+my_armature = MockArmature(
+    "MyArmature", ["Root", "Hand.l", "Spine_01", "Leg.R", "Arm.L", "Tail"]
+)
+sub_armature = MockArmature("SubArmature", ["Bone", "Bone.001", "Bone.002", "Bone.003"])
 
 
 test_selected_pose_bones = [
@@ -102,7 +110,6 @@ for pose_bone in armature.pose.bones:
 # # >>> Bone.003
 # # >>> Bone.004
 # # >>> Bone.005
-    
 
 
 class CustomPropCollection:
@@ -138,6 +145,7 @@ class CustomPropCollection:
 
     def items(self):
         return [(key, self._items[key]) for key in self._keys]
+
 
 # 使用例
 collection = CustomPropCollection()

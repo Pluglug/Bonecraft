@@ -41,6 +41,7 @@ def visual_log_in_wonderland():
     # Deleting the instance
     del log
 
+
 def visual_log_in_wonderland2():
     # Pseudo debug flags
     DBG_TEA_PARTY = True

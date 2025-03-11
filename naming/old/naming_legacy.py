@@ -1,20 +1,27 @@
 import re
+
 # import bpy
 
 try:
     from .element_base import NamingManager
-    from .operators.mixin_utils import ArmModeMixin  # vscodeではエラーになる Blenderでは問題ない
+    from .operators.mixin_utils import (
+        ArmModeMixin,
+    )  # vscodeではエラーになる Blenderでは問題ない
     from .debug import log, DBG_PARSE, DBG_RENAME
-    from .naming_test_utils import (rename_preset, # test_selected_pose_bones, 
-                                    random_test_names, generate_test_names, 
-                                    )
-except :
+    from .naming_test_utils import (
+        rename_preset,  # test_selected_pose_bones,
+        random_test_names,
+        generate_test_names,
+    )
+except:
     from operators.mixin_utils import ArmModeMixin
     from debug import log, DBG_PARSE, DBG_RENAME
-    from naming.old.naming_test_utils import (rename_preset, # test_selected_pose_bones,
-                                    random_test_names, generate_test_names, 
-                                    )
-    
+    from naming.old.naming_test_utils import (
+        rename_preset,  # test_selected_pose_bones,
+        random_test_names,
+        generate_test_names,
+    )
+
 
 class BoneData:
     def __init__(self, **kwargs):
@@ -25,7 +32,7 @@ class BoneData:
 
     def __setitem__(self, key, value):
         self.attributes[key] = value
-    
+
     def __delitem__(self, key):
         del self.attributes[key]
 
@@ -34,28 +41,28 @@ class BoneData:
 
     def keys(self):
         return self.attributes.keys()
-    
+
     def values(self):
         return self.attributes.values()
-    
+
     def items(self):
         return self.attributes.items()
-    
+
     def __getattr__(self, name):
         try:
             return self.attributes[name]
         except KeyError:
-            raise AttributeError(f'{name} is not defined')
+            raise AttributeError(f"{name} is not defined")
 
     def __setattr__(self, name, value):
-        if name == 'attributes':
+        if name == "attributes":
             super().__setattr__(name, value)
         else:
             self.attributes[name] = value
-    
+
     def __repr__(self):
-        attrs = ', '.join(f'{k}={v!r}' for k, v in self.attributes.items())
-        return f'{self.__class__.__name__}({attrs})'
+        attrs = ", ".join(f"{k}={v!r}" for k, v in self.attributes.items())
+        return f"{self.__class__.__name__}({attrs})"
 
 
 # NameManagerをBoneDataのために作り直す
@@ -71,31 +78,28 @@ class BoneData:
 #         self.bd['elements'] = nm.replace_bl_counter(self.bd['elements'])
 
 
-    
-    
-
 # FIXME: このモジュールの構成を見直す
 # Builder, Interface, Parser, Element, Rebuilder etc...
 class NamingManager:
     def __init__(self, preset):
         self.preset = preset
         self.sep = re.escape(self.preset["common_settings"]["common_separator"])
-    
+
     # -----builders-----
     # def build_element_pattern(self, element_type):
     #     try:
     #         build_func = getattr(self, f'build_{element_type}_pattern')
     #     except AttributeError:
     #         raise AttributeError(f'build_{element_type}_pattern is not defined')
-        
+
     #     return build_func()
-    
+
     # TODO: パターンをキャッシュする
     # TODO: パターンだけ作ればいいようにしたい -> (?P<{element_type}>{pattern})
 
     # def build_prefix_pattern(self):
     #     prefix_pattern = '|'.join(self.preset['prefix'])
-    #     return f'(?P<prefix>{prefix_pattern})(?:{self.sep})?'  
+    #     return f'(?P<prefix>{prefix_pattern})(?:{self.sep})?'
 
     # def build_middle_pattern(self):
     #     middle_pattern = '|'.join(map(re.escape, self.preset['middle']))
@@ -113,18 +117,18 @@ class NamingManager:
     #     side_sep = re.escape(self.preset["side_pair_settings"]["side_separator"])
     #     side_position = self.preset["side_pair_settings"]["side_position"]
     #     side_pattern = self.preset['side_pair_settings']['side_pair']
-        
+
     #     if side_position == 'PREFIX':
     #         return f'(?P<side>{side_pattern}){side_sep}'
     #     elif side_position == 'SUFFIX':
     #         return f'{side_sep}(?P<side>{side_pattern})'
-    
+
     # def build_bl_counter_pattern(self):
     #     # Buildin Blender counter pattern like ".001"
     #     pattern = r'\.\d{3}'
     #     return f'(?P<bl_counter>{pattern})'
 
-    # # -----interface-----    
+    # # -----interface-----
     # def get_counter_value(self, elements):
     #     """カウンターの値を取得する"""
     #     return int(elements['counter']['value']) if elements['counter'] else None
@@ -135,7 +139,7 @@ class NamingManager:
     #         return int(elements['bl_counter']['value'][1:])  # .001 -> 001
     #     else:
     #         return None
-    
+
     # def get_counter_string(self, value: int) -> str:
     #     """カウンターの値を文字列に変換する"""
     #     return f"{value:0{self.preset['counter_settings']['digits']}d}"
@@ -146,10 +150,10 @@ class NamingManager:
         return bone.name in (b.name for b in bone.id_data.pose.bones)
 
     def replace_bl_counter(self, elements):
-        if 'bl_counter' in elements:
+        if "bl_counter" in elements:
             num = self.get_bl_counter_value(elements)
-            elements['counter'] = {'value': self.get_counter_string(num)}
-            del elements['bl_counter']
+            elements["counter"] = {"value": self.get_counter_string(num)}
+            del elements["bl_counter"]
         return elements
 
     # 名前の重複を確認しながら、カウンターをインクリメントしていく
@@ -158,9 +162,8 @@ class NamingManager:
         counter_value = self.get_counter_value(elements)
         while self.check_duplicate_names(bone):
             counter_value += 1
-            elements['counter']['value'] = self.get_counter_string(counter_value)
+            elements["counter"]["value"] = self.get_counter_string(counter_value)
         return elements
-    
 
     # # -----parser-----
     # def search_elements(self, name, element_types=None):
@@ -186,7 +189,6 @@ class NamingManager:
     #         }
     #     else:
     #         return None
-
 
     # # -----rebuilder-----
     # def update_elements(self, elements, new_elements=None):
@@ -220,7 +222,7 @@ class NamingManager:
     #     pass
     #     # if elements['bl_counter']:
     #     #     elements = self.replace_bl_counter(elements)  # これは外で済ませるべき
-        
+
     #     # n = []
     #     # for element_type in ['prefix', 'middle', 'suffix', 'counter']:
     #     #     if new_elements and element_type in new_elements:
@@ -240,50 +242,57 @@ class NamingManager:
     #     #         name = f'{side}{side_sep}{name}'
     #     #     else:
     #     #         name = f'{name}{side_sep}{side}'
-    
+
+
 import bpy
+
+
 class BONECRAFT_OT_RenameBone(bpy.types.Operator, ArmModeMixin):
     bl_idname = "bonecraft.rename_bone_test"
     bl_label = "Rename Bone Test"
     bl_description = "Testing renaming bones"
 
     nm = NamingManager(rename_preset)
-    
+
     target_parts: bpy.props.EnumProperty(
         name="Target Parts",
         description="Target parts to rename",
         items=[
-            ('prefix', "Prefix", "Prefix", 1),
-            ('middle', "Middle", "Middle", 2),
-            ('suffix', "Suffix", "Suffix", 3),
+            ("prefix", "Prefix", "Prefix", 1),
+            ("middle", "Middle", "Middle", 2),
+            ("suffix", "Suffix", "Suffix", 3),
             # ('counter', "Counter", "Counter", 4),
             # ('side', "Side", "Side", 5),
         ],
-        default='middle'
+        default="middle",
     )
     operation: bpy.props.EnumProperty(
         name="Operation",
         description="Operation to perform",
         items=[
-            ('add/replace', "Add/Replace", "Add or replace", 1),
-            ('delete', "Delete", "Delete", 2),
+            ("add/replace", "Add/Replace", "Add or replace", 1),
+            ("delete", "Delete", "Delete", 2),
         ],
-        default='add/replace'
+        default="add/replace",
     )
     preset_index: bpy.props.IntProperty(
         name="Preset Index",
         description="Preset index to use",
         default=0,
         min=0,
-        max=100
+        max=100,
     )
 
     def execute(self, context):
-        DBG_RENAME and log.info(f"Target parts: {self.target_parts}", f"Operation: {self.operation}", f"Preset index: {self.preset_index}")
-        with self.mode_context(context, 'POSE'):
+        DBG_RENAME and log.info(
+            f"Target parts: {self.target_parts}",
+            f"Operation: {self.operation}",
+            f"Preset index: {self.preset_index}",
+        )
+        with self.mode_context(context, "POSE"):
             self.rename_selected_pose_bones(context)
-        return {'FINISHED'}
-    
+        return {"FINISHED"}
+
     def rename_selected_pose_bones(self, context):
         for bone in context.selected_pose_bones:
             self.rename_bone(bone)
@@ -293,9 +302,11 @@ class BONECRAFT_OT_RenameBone(bpy.types.Operator, ArmModeMixin):
         armature = bone.id_data
         elements = self.nm.search_elements(bone.name)  # ここでbl_counterが判明する
 
-        if self.operation == 'add/replace':
-            new_elements = {self.target_parts: rename_preset[self.target_parts][self.preset_index]} 
-        elif self.operation == 'delete':
+        if self.operation == "add/replace":
+            new_elements = {
+                self.target_parts: rename_preset[self.target_parts][self.preset_index]
+            }
+        elif self.operation == "delete":
             new_elements = {self.target_parts: ""}
 
         new_name = self.nm.rebuild_name(elements, new_elements)
@@ -323,11 +334,11 @@ class BONECRAFT_OT_RenameBone(bpy.types.Operator, ArmModeMixin):
 #         with self.mode_context(context, 'POSE'):
 #             self.toggle_side_selected_pose_bones(context)
 #         return {'FINISHED'}
-    
+
 #     def toggle_side_selected_pose_bones(self, context):
 #         for bone in context.selected_pose_bones:
 #             self.toggle_side(bone)
-    
+
 #     def toggle_side(self, bone):
 #         DBG_RENAME and log.info(f"Toggle side: {bone.name}")
 #         elements = self.nm.search_elements(bone.name)
@@ -339,7 +350,7 @@ class BONECRAFT_OT_RenameBone(bpy.types.Operator, ArmModeMixin):
 #                 new_elements = {'side': side_pair[self.side_pair_index]}
 #         else:
 #             new_elements = {'side': side_pair[self.side_pair_index]}  # TODO: Refactor
-        
+
 #         new_name = self.nm.rebuild_name(elements, new_elements)
 #         bone.name = new_name
 #         DBG_RENAME and log.info(f"New name: {bone.name}")
@@ -361,8 +372,6 @@ if __name__ == "__main__":
 
     # test_names = generate_test_names(rename_preset)
     # parser.test_parse_elements(test_names)
-
-
 
     # # -----test NamingElement-----
     # DBG_PARSE = False

@@ -1,5 +1,6 @@
 import bpy
 import os
+
 # import sys
 # import logging
 import traceback
@@ -30,7 +31,9 @@ def get_addon_preferences(context=bpy.context):
     if addon_prefs is not None:
         return addon_prefs.preferences
     else:
-        raise KeyError(f"Addon '{ADDON_ID}' not found. Ensure it is installed and enabled.")
+        raise KeyError(
+            f"Addon '{ADDON_ID}' not found. Ensure it is installed and enabled."
+        )
 
 
 def uprefs():
@@ -38,12 +41,14 @@ def uprefs():
     warnings.warn(
         f"uprefs() is deprecated. Use get_addon_preferences() instead. Called from {caller.filename}, line {caller.lineno}",
         DeprecationWarning,
-        stacklevel=2
+        stacklevel=2,
     )  # I don't really understand how this module works.
     return get_addon_preferences()
 
 
 def prefs():
     caller = traceback.extract_stack(None, 2)[0]
-    log.warn(f"prefs() is deprecated. Use get_addon_preferences() instead. Called from {caller.filename}, line {caller.lineno}")
+    log.warn(
+        f"prefs() is deprecated. Use get_addon_preferences() instead. Called from {caller.filename}, line {caller.lineno}"
+    )
     return get_addon_preferences()

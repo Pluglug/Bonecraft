@@ -17,8 +17,9 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
+
 # from . bone_naming import *
-from . debug import log, DBG_INIT
+from .debug import log, DBG_INIT
 from . import addon
 
 bl_info = {
@@ -31,7 +32,7 @@ bl_info = {
     "warning": "",
     "wiki_url": "",
     "tracker_url": "",
-    "category": "Rigging"
+    "category": "Rigging",
 }
 
 
@@ -39,7 +40,8 @@ addon.VERSION = bl_info["version"]
 addon.BL_VERSION = bl_info["blender"]
 
 
-from . operators import edit_ops, custom_shape, mode_toggle
+from .operators import edit_ops, custom_shape, mode_toggle
+
 # from . import naming_base
 from . import rename_operation
 from . import naming

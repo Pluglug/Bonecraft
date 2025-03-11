@@ -6,18 +6,19 @@ import re
 try:
     from .debug import log, DBG_RENAME
     from .operators.mixin_utils import ArmModeMixin
-    from .naming_test_utils import (rename_settings, # test_selected_pose_bones, 
-                               random_test_names, generate_test_names, 
-                               )
+    from .naming_test_utils import (
+        rename_settings,  # test_selected_pose_bones,
+        random_test_names,
+        generate_test_names,
+    )
 except:
     from debug import log, DBG_RENAME
     from operators.mixin_utils import ArmModeMixin
-    from naming.old.naming_test_utils import (rename_settings, # test_selected_pose_bones, 
-                               random_test_names, generate_test_names, 
-                               )
-    
-
-
+    from naming.old.naming_test_utils import (
+        rename_settings,  # test_selected_pose_bones,
+        random_test_names,
+        generate_test_names,
+    )
 
 
 # class ObjectInfo:  # BlenderObjectInfo NamingObject など
@@ -28,13 +29,13 @@ except:
 #         self.new_name = ""
 
 # data_type (enum in [
-#     'OBJECT', 
-#     'COLLECTION', 
-#     'MATERIAL', 
+#     'OBJECT',
+#     'COLLECTION',
+#     'MATERIAL',
 #     'MESH', ?
 #     'CURVE', ?
 #     'META', ?
-#     'VOLUME', 
+#     'VOLUME',
 #     'GPENCIL', ?
 #     'ARMATURE', ?
 #     'LATTICE', ?
@@ -42,28 +43,28 @@ except:
 #     'LIGHT_PROBE', ?
 #     'CAMERA', ?
 #     'SPEAKER', ?
-#     'BONE', 
+#     'BONE',
 #     'NODE', ?
-#     'SEQUENCE_STRIP', 
+#     'SEQUENCE_STRIP',
 #     'ACTION_CLIP'
 #     ], (optional)) – Type, Type of data to rename
 
 # SimpleRenamesItem = [
-            # Object,
-            # Data,
-            # Material,
-            # Bone,
-            # Image Textures,
-            # Collection,
-            # Actions,
-            # Shape Keys,
-            # Vertex Groups,
-            # Particle Systems,
-            # UV Maps,
-            # Facemaps,
-            # Color Attributes,
-            # Attributes,
-            # ]
+# Object,
+# Data,
+# Material,
+# Bone,
+# Image Textures,
+# Collection,
+# Actions,
+# Shape Keys,
+# Vertex Groups,
+# Particle Systems,
+# UV Maps,
+# Facemaps,
+# Color Attributes,
+# Attributes,
+# ]
 
 
 class BoneInfo:
@@ -74,11 +75,10 @@ class BoneInfo:
         self.new_name = ""
 
         self.naming_elements = None
-        
+
         # 今後の拡張
         self.collection = None
         self.color = None
-    
 
 
 class RenameTest:
@@ -87,7 +87,7 @@ class RenameTest:
         self.pr = rename_settings
         self.naming_elements = NamingElements(obj_type, self.pr)
         self.ns = PoseBonesNamespaces()
-    
+
     def test(self, selected_pose_bones):
         for bone in selected_pose_bones:
             b = BoneInfo(bone)
@@ -114,29 +114,37 @@ class RenameTest:
 
 
 import bpy
+
+
 class EZRENAMER_OT_RenameTest(bpy.types.Operator, ArmModeMixin):
     bl_idname = "ezrenamer.rename_test"
     bl_label = "Rename Test"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {"REGISTER", "UNDO"}
 
     new_elements: bpy.props.StringProperty(name="New Elements", default="")
 
     def execute(self, context):
-        with self.mode_context(context, 'POSE'):
+        with self.mode_context(context, "POSE"):
             new_elements = {"prefix": "CTRL", "suffix": "", "position": None}
-            _new_elements = eval(self.new_elements) if self.new_elements else new_elements
+            _new_elements = (
+                eval(self.new_elements) if self.new_elements else new_elements
+            )
             selected_pose_bones = context.selected_pose_bones
             es = NamingElements("bone", rename_settings)
             for bone in selected_pose_bones:
-                DBG_RENAME and log.header(f'Original name: {bone.name}')
+                DBG_RENAME and log.header(f"Original name: {bone.name}")
                 es.search_elements(bone.name)
-                DBG_RENAME and log.info(f'Elements: {[(e.name, e.value) for e in es.elements]}')
+                DBG_RENAME and log.info(
+                    f"Elements: {[(e.name, e.value) for e in es.elements]}"
+                )
                 es.update_elements(_new_elements)
-                DBG_RENAME and log.info(f'Update elements: {[(e.name, e.value) for e in es.elements]}')
+                DBG_RENAME and log.info(
+                    f"Update elements: {[(e.name, e.value) for e in es.elements]}"
+                )
                 new_name = es.counter_operation(bone)
                 bone.name = new_name
-                DBG_RENAME and log.warning(f'New name: {bone.name}')
-        return {'FINISHED'}
+                DBG_RENAME and log.warning(f"New name: {bone.name}")
+        return {"FINISHED"}
 
 
 operator_classes = [
@@ -153,6 +161,7 @@ if __name__ == "__main__":
     # name = es.render_name()
     # log.info(name)
     from naming.old.naming_test_utils import rename_preset
+
     test_names = random_test_names(rename_preset, 2)  # TODO: test_utilsを作り直す
     new_elements = {"prefix": "CTRL", "suffix": "", "position": None}
 

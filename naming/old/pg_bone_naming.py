@@ -11,11 +11,12 @@ class BoneInfo:
         self.new_name = ""  # 新しい名前を格納するためのフィールド
         # 今後の拡張のための追加フィールド
         self.collection = None  # ボーンが属するコレクション
-        self.color = None       # ボーンの色
+        self.color = None  # ボーンの色
 
     def rename(self, new_name):
         self.new_name = new_name
         self.pose_bone.name = new_name
+
 
 """
 メモ
@@ -48,15 +49,17 @@ bpy.context.selected_pose_bones
 bpy.context.selected_pose_bones_from_active_object
 
 """
-    
+
 
 class BoneNamingPrefix(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Name")
     enabled: bpy.props.BoolProperty(name="Enabled", default=True)
 
+
 class BoneNamingMiddleWord(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Name")
     enabled: bpy.props.BoolProperty(name="Enabled", default=True)
+
 
 class BoneNamingSuffix(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Name")
@@ -64,10 +67,10 @@ class BoneNamingSuffix(bpy.types.PropertyGroup):
 
 
 separator_items = [
-    ('_', "Underscore", "_"),
-    ('.', "Dot", "."),
-    ('-', "Dash", "-"),
-    (' ', "Space", " "),
+    ("_", "Underscore", "_"),
+    (".", "Dot", "."),
+    ("-", "Dash", "-"),
+    (" ", "Space", " "),
 ]
 
 
@@ -78,44 +81,37 @@ class BoneNamingPreset(bpy.types.PropertyGroup):
     middle_words: bpy.props.CollectionProperty(type=BoneNamingMiddleWord)
     suffixes: bpy.props.CollectionProperty(type=BoneNamingSuffix)
 
-    counter: bpy.props.IntProperty(
-        name="Counter Settings", 
-        default=2, 
-        min=1, 
-        max=5
-    )
+    counter: bpy.props.IntProperty(name="Counter Settings", default=2, min=1, max=5)
 
     common_separator: bpy.props.EnumProperty(
-        name="Common Separator",
-        items=separator_items,
-        default='_'
+        name="Common Separator", items=separator_items, default="_"
     )
 
     side_pair: bpy.props.EnumProperty(
         name="Side Pair",
         description="Left/Right side pair format",
         items=[
-            ('L|R', "L / R", "Upper case L/R", 1),
-            ('l|r', "l / r", "Lower case l/r", 2),
-            ('LEFT|RIGHT', "LEFT / RIGHT", "Full word LEFT/RIGHT", 3),
-            ('left|right', "left / right", "Full word left/right", 4),
+            ("L|R", "L / R", "Upper case L/R", 1),
+            ("l|r", "l / r", "Lower case l/r", 2),
+            ("LEFT|RIGHT", "LEFT / RIGHT", "Full word LEFT/RIGHT", 3),
+            ("left|right", "left / right", "Full word left/right", 4),
         ],
-        default='L|R'
+        default="L|R",
     )
     side_separator: bpy.props.EnumProperty(
         name="Side Separator",
         description="Separator for left/right",
         items=separator_items,
-        default='.'
+        default=".",
     )
     side_position: bpy.props.EnumProperty(
         name="Side Position",
         description="Position of side pair",
         items=[
-            ('PREFIX', "Prefix", "Before the name"),
-            ('SUFFIX', "Suffix", "After the name"),
+            ("PREFIX", "Prefix", "Before the name"),
+            ("SUFFIX", "Suffix", "After the name"),
         ],
-        default='SUFFIX'
+        default="SUFFIX",
     )
 
 

@@ -6,8 +6,10 @@ def capture_group(func):
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs):
         group = self.id
-        return f'(?P<{group}>{func(self, *args, **kwargs)})'
+        return f"(?P<{group}>{func(self, *args, **kwargs)})"
+
     return wrapper
+
 
 def maybe_with_separator(func):
     @functools.wraps(func)
@@ -17,9 +19,10 @@ def maybe_with_separator(func):
         result = func(self, *args, **kwargs)
         if result:
             if order == 1:
-                return f'{result}{sep}'
+                return f"{result}{sep}"
             else:  # order > 1:
-                return f'{sep}{result}'
+                return f"{sep}{result}"
         else:
             return result
+
     return wrapper

@@ -3,6 +3,7 @@ from .debug_flags import DBG_OPS
 
 import functools
 
+
 def log_exec(func):
     @functools.wraps(func)
     def wrapper(self, context, *args, **kwargs):
@@ -14,4 +15,5 @@ def log_exec(func):
             log.decrease()
             log.info(f"Finished {self.bl_idname}")
         return result
+
     return wrapper

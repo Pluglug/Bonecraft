@@ -7,7 +7,14 @@ import itertools
 #     from debug import log, DBG_PARSE
 
 test_bone_names = [
-    "Arm.L", "Leg.R", "Spine_01", "Hand.l", "Foot.r", "Head", "Finger01.L", "Toe01.R"
+    "Arm.L",
+    "Leg.R",
+    "Spine_01",
+    "Hand.l",
+    "Foot.r",
+    "Head",
+    "Finger01.L",
+    "Toe01.R",
 ]
 
 # test_selected_pose_bones = [
@@ -31,20 +38,22 @@ test_bone_names = [
 # これによって、さらに柔軟な名前の組み合わせを生成できるようになる
 rename_preset = {
     "prefix": ["CTRL", "DEF", "MCH"],
-    "middle": ["Root", "Arm", "Leg", "Spine", "Hand", "Foot", "Head", "Finger", "Toe", "Tail"],
+    "middle": [
+        "Root",
+        "Arm",
+        "Leg",
+        "Spine",
+        "Hand",
+        "Foot",
+        "Head",
+        "Finger",
+        "Toe",
+        "Tail",
+    ],
     "suffix": ["Tweak", "Pole"],
-    "counter": {
-        "enabled": True, 
-        "digits": 2
-    },
-    "side_pair": {
-        "side_pair": "L|R",
-        "side_separator": ".",
-        "side_position": "SUFFIX"
-    },
-    "common_settings": {
-        "common_separator": "_"
-        }
+    "counter": {"enabled": True, "digits": 2},
+    "side_pair": {"side_pair": "L|R", "side_separator": ".", "side_position": "SUFFIX"},
+    "common_settings": {"common_separator": "_"},
 }
 
 
@@ -63,7 +72,19 @@ rename_settings = {
             "name": "middle",
             "type": "text",
             "enabled": True,
-            "items": ["Bone", "Root", "Arm", "Leg", "Spine", "Hand", "Foot", "Head", "Finger", "Toe", "Tail"],
+            "items": [
+                "Bone",
+                "Root",
+                "Arm",
+                "Leg",
+                "Spine",
+                "Hand",
+                "Foot",
+                "Head",
+                "Finger",
+                "Toe",
+                "Tail",
+            ],
             "separator": "_",
         },
         {
@@ -85,7 +106,7 @@ rename_settings = {
         {
             "order": 5,
             "name": "position",
-            "type": "position",  # positionである必要がなくなった  
+            "type": "position",  # positionである必要がなくなった
             # "type": "text",　# 否定 セパレーター込みで一つの要素として扱う必要がある 正規表現を見直す必要がある searchロジックでのセパレーターの扱いを見直す
             "enabled": True,
             "items": ["L", "R", "Top", "Bot", "Fr", "Bk"],  # XAXIS, YAXIS, ZAXIS
@@ -96,21 +117,27 @@ rename_settings = {
 
 position_enum_items = {
     "XAXIS": [
-        ('L|R', "L / R", "Upper case L/R", 1),
-        ('l|r', "l / r", "Lower case l/r", 2),
-        ('LEFT|RIGHT', "LEFT / RIGHT", "Full word LEFT/RIGHT", 3),
-        ('Left|Right', "Left / Right", "Full word Left/Right", 4),
-        ('left|right', "left / right", "Full word left/right", 5),
+        ("L|R", "L / R", "Upper case L/R", 1),
+        ("l|r", "l / r", "Lower case l/r", 2),
+        ("LEFT|RIGHT", "LEFT / RIGHT", "Full word LEFT/RIGHT", 3),
+        ("Left|Right", "Left / Right", "Full word Left/Right", 4),
+        ("left|right", "left / right", "Full word left/right", 5),
     ],
     "YAXIS": [
-        ('Top|Bot', "Top / Bot", "Upper case Top/Bot", 1),  # pose.autoside_namesによってシステム的に付与される識別子。どうやら接尾語に追加される
+        (
+            "Top|Bot",
+            "Top / Bot",
+            "Upper case Top/Bot",
+            1,
+        ),  # pose.autoside_namesによってシステム的に付与される識別子。どうやら接尾語に追加される
     ],
     "ZAXIS": [
-        ('Fr|Bk', "Fr / Bk", "Upper case Fr/Bk", 1),
-    ]
+        ("Fr|Bk", "Fr / Bk", "Upper case Fr/Bk", 1),
+    ],
 }
 
-def get_position_items(x=0, y=0, z=0): # -> List[XAXIS, YAXIS, ZAXIS]
+
+def get_position_items(x=0, y=0, z=0):  # -> List[XAXIS, YAXIS, ZAXIS]
     # ただのスケッチ。ユーザーの設定に基づいてアイテムを返す。実装は後で
     items = []
     items.append(position_enum_items["XAXIS"][x])
@@ -118,12 +145,14 @@ def get_position_items(x=0, y=0, z=0): # -> List[XAXIS, YAXIS, ZAXIS]
     items.append(position_enum_items["ZAXIS"][z])
     return items
 
+
 separator_items = [
-    ('_', "Underscore", "_"),
-    ('.', "Dot", "."),
-    ('-', "Dash", "-"),
-    (' ', "Space", " "),
+    ("_", "Underscore", "_"),
+    (".", "Dot", "."),
+    ("-", "Dash", "-"),
+    (" ", "Space", " "),
 ]
+
 
 def random_test_names(preset, num_cases=10):
     """ランダムな名前を生成する"""
@@ -132,34 +161,41 @@ def random_test_names(preset, num_cases=10):
         name_parts = []
 
         # 接頭語
-        if preset['prefix'] and random.choice([True, False]):
-            name_parts.append(random.choice(preset['prefix']))
+        if preset["prefix"] and random.choice([True, False]):
+            name_parts.append(random.choice(preset["prefix"]))
 
         # 中間語
-        if preset['middle']:
-            name_parts.append(random.choice(preset['middle']))
+        if preset["middle"]:
+            name_parts.append(random.choice(preset["middle"]))
 
         # 接尾語
-        if preset['suffix'] and random.choice([True, False]):
-            name_parts.append(random.choice(preset['suffix']))
+        if preset["suffix"] and random.choice([True, False]):
+            name_parts.append(random.choice(preset["suffix"]))
 
         # カウンター
-        if preset['counter']['enabled']:
+        if preset["counter"]["enabled"]:
             counter_format = f"{{:0{preset['counter']['digits']}d}}"
             name_parts.append(counter_format.format(random.randint(1, 10)))
 
-        test_names.append(preset['common_settings']['common_separator'].join(name_parts))
+        test_names.append(
+            preset["common_settings"]["common_separator"].join(name_parts)
+        )
 
         # 左右識別子を追加
-        if preset['side_pair']['side_pair'] and random.choice([True, False]):
-            if preset['side_pair']['side_position'] == 'PREFIX':
-                test_names[-1] = random.choice(preset['side_pair']['side_pair']) + \
-                    preset['side_pair']['side_separator'] + test_names[-1]
+        if preset["side_pair"]["side_pair"] and random.choice([True, False]):
+            if preset["side_pair"]["side_position"] == "PREFIX":
+                test_names[-1] = (
+                    random.choice(preset["side_pair"]["side_pair"])
+                    + preset["side_pair"]["side_separator"]
+                    + test_names[-1]
+                )
             else:
-                test_names[-1] += preset['side_pair']['side_separator'] + \
-                    random.choice(preset['side_pair']['side_pair'])            
+                test_names[-1] += preset["side_pair"]["side_separator"] + random.choice(
+                    preset["side_pair"]["side_pair"]
+                )
 
     return test_names
+
 
 # print(random_test_names(rename_preset, 10))
 
@@ -176,8 +212,15 @@ def generate_test_names(preset):
     middle_words = preset["middle_words"]
     suffixes = preset["suffixes"] + [None]
     sides = list(preset["side_pair_settings"]["side_pair"]) + [None]
-    
-    counters = [f'{random.randint(1, 99):02d}' if preset["counter_settings"]["enabled"] else None for _ in range(10)]
+
+    counters = [
+        (
+            f"{random.randint(1, 99):02d}"
+            if preset["counter_settings"]["enabled"]
+            else None
+        )
+        for _ in range(10)
+    ]
 
     # 要素の組み合わせを生成
     for elements in itertools.product([True, False], repeat=4):
@@ -195,10 +238,10 @@ def generate_test_names(preset):
         if elements[3]:  # 左右識別子
             side = random.choice(sides)
             if side:
-                if side_position == 'SUFFIX':
-                    base_name += f'{side_sep}{side}'
+                if side_position == "SUFFIX":
+                    base_name += f"{side_sep}{side}"
                 else:  # 'PREFIX'
-                    base_name = f'{side}{side_sep}{base_name}'
+                    base_name = f"{side}{side_sep}{base_name}"
 
         test_cases.append(base_name)
 
@@ -217,16 +260,20 @@ def generate_test_names_all_cases(preset):
     middle_words = preset["middle_words"] + [None]
     suffixes = preset["suffixes"] + [None]
     sides = list(preset["side_pair_settings"]["side_pair"]) + [None]
-    counters = [f'{i:02d}' for i in range(1, 100)] if preset["counter"]["enabled"] else [None]
+    counters = (
+        [f"{i:02d}" for i in range(1, 100)] if preset["counter"]["enabled"] else [None]
+    )
 
     # 全ての組み合わせを生成
-    for prefix, middle, suffix, counter, side in itertools.product(prefixes, middle_words, suffixes, counters, sides):
+    for prefix, middle, suffix, counter, side in itertools.product(
+        prefixes, middle_words, suffixes, counters, sides
+    ):
         parts = [p for p in [prefix, middle, suffix, counter] if p]
         name = sep.join(parts)
 
-        if side_position == 'SUFFIX' and side:
+        if side_position == "SUFFIX" and side:
             name = f"{name}{side_sep}{side}" if name else side
-        elif side_position == 'PREFIX' and side:
+        elif side_position == "PREFIX" and side:
             name = f"{side}{side_sep}{name}" if name else side
 
         if name:
@@ -247,4 +294,3 @@ def generate_test_names_all_cases(preset):
 #         # DBG_PARSE and log.info(f"Elements: {elements}")
 #         new_name = nm.rebuild_name(elements, new_elements)
 #         DBG_PARSE and log.info(f"New name: {new_name}")
-

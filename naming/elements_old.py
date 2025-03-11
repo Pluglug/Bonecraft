@@ -13,13 +13,13 @@
 #             element_type = element_settings["type"]
 #             element = self.create_element(element_type, element_settings)
 #             elements.append(element)
-            
+
 #         elements.append(BlCounterElement({}))  # これはハードコードで良い
 #         elements.sort(key=lambda e: e.get_order())
 #         DBG_RENAME and log.info( \
 #             f'build_elements: {elements_type}:\n' + '\n'.join([f'  {e.identifier}: {e.name}' for e in elements]))
 #         return elements
-    
+
 #     def get_element_classes(self):
 #         element_classes = {}  # 再利用する場合はキャッシュ
 #         subclasses = NamingElement.__subclasses__()  # TODO: obj_typeに適したサブクラスを取得する必要がある
@@ -51,7 +51,7 @@
 #             element.standby()
 #             element.search(name)
 #         # return ??? 何かしら返すと使いやすいかも
-        
+
 #     def update_elements(self, new_elements: dict=None):
 #         if not new_elements and not isinstance(new_elements, dict):
 #             return
@@ -71,7 +71,7 @@
 #         name = ''.join(name_parts)
 #         DBG_RENAME and log.info(f'render_name: {name}')
 #         return name
-    
+
 #     def apply_name_change(self, obj, new_name):
 #         old_name = obj.name
 #         obj.name = new_name
@@ -100,7 +100,7 @@
 #                 else:
 #                     log.error(f'  counter operation failed: {bl_counter.value}')
 #                     return None
-        
+
 #         elif ez_counter.value:  # ez_counterのみの存在
 #             DBG_RENAME and log.info(f'  existing ez_counter: {ez_counter.value}')
 #             proposed_name = self.render_name()  # この時点で、名前は完成しているはず
@@ -132,7 +132,7 @@
 #         for element in self.elements:
 #             if element.cache_invalidated:
 #                 element.update_cache()
-    
+
 #     def print_elements(self, name):
 #         self.search_elements(name)
 #         for element in self.elements:
