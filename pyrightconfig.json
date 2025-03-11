@@ -1,0 +1,13 @@
+{
+    "reportGeneralTypeIssues": true,
+    "reportInvalidTypeVarUse": false,
+    "reportCallInDefaultInitializer": false,
+    "reportPropertyTypeMismatch": false,
+    "reportInvalidTypeForm": false,
+    "typeCheckingMode": "basic",
+    "useLibraryCodeForTypes": true,
+    "exclude": [
+        "**/__pycache__",
+        "**/.git"
+    ]
+} 
